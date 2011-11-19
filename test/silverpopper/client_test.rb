@@ -1,17 +1,16 @@
 require 'helper'
-
 require 'active_support/ordered_hash'
 
 class Silverpopper::ClientTest < Test::Unit::TestCase
   def test_initializer
     s = Silverpopper::Client.new(
-      'user_name' => 'testman',
-      'password'  => 'pass',
-      'pod'       => 1)
+      :user_name => 'testman',
+      :password => 'pass',
+      :pod => 1)
 
     assert_equal 'testman', s.user_name
-    assert_equal 'pass',    s.send(:password)
-    assert_equal 1,         s.pod
+    assert_equal 'pass', s.send(:password)
+    assert_equal 1, s.pod
   end
 
   def test_login
@@ -21,13 +20,12 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     assert_equal "3631784201", s.login
   end
 
-
   def test_expect_malformed_login_response
     s = new_silverpop
-    
+
     expect_send_request_api(login_request_xml, silverpop_url).
-      returns(MockHTTPartyResponse.new(200, 
-        "<Envelope><Body><RESULT></RESULT></Body></Envelope>"))
+      returns(MockHTTPartyResponse.new(200,
+      "<Envelope><Body><RESULT></RESULT></Body></Envelope>"))
 
     assert_raise RuntimeError do
       s.login
@@ -49,7 +47,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 
     expect_login
     expect_send_request_api(logout_request_xml, "#{silverpop_url};jsessionid=3631784201").returns(MockHTTPartyResponse.new(200, "<omg />"))
-    
+
     s.login
     assert_raise RuntimeError do
       s.logout
@@ -57,7 +55,6 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 
     assert_not_nil s.instance_eval { @session_id }
   end
-
 
   def test_add_contact
     s = new_silverpop
@@ -68,9 +65,9 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     s.login
 
     hash = ActiveSupport::OrderedHash.new
-    hash['list_id']     = '1'
-    hash['email']       = 'testman@testman.com'
-    hash['auto_reply']  = false
+    hash[:list_id] = '1'
+    hash[:email] = 'testman@testman.com'
+    hash[:auto_reply] = false
     hash['Test Field'] = 'Test Value'
 
     assert_equal "2007408974", s.add_contact(hash)
@@ -81,20 +78,19 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 
     expect_login
     expect_send_request_api(add_contact_xml, silverpop_session_url).returns(MockHTTPartyResponse.new(200, "<omg />"))
-    
+
     s.login
 
     hash = ActiveSupport::OrderedHash.new
-    hash['list_id']     = '1'
-    hash['email']       = 'testman@testman.com'
-    hash['auto_reply']  = false
+    hash[:list_id] = '1'
+    hash[:email] = 'testman@testman.com'
+    hash[:auto_reply] = false
     hash['Test Field'] = 'Test Value'
 
     assert_raise RuntimeError do
       s.add_contact(hash)
     end
   end
-
 
   def test_remove_contact
     s = new_silverpop
@@ -105,8 +101,8 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     s.login
 
     hash = ActiveSupport::OrderedHash.new
-    hash['list_id']     = '1'
-    hash['email']       = 'testman@testman.com'
+    hash[:list_id] = '1'
+    hash[:email] = 'testman@testman.com'
 
     assert_equal true, s.remove_contact(hash)
   end
@@ -116,12 +112,12 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 
     expect_login
     expect_send_request_api(remove_contact_xml, silverpop_session_url).returns(MockHTTPartyResponse.new(200, "<omg />"))
-    
+
     s.login
 
     hash = ActiveSupport::OrderedHash.new
-    hash['list_id']     = '1'
-    hash['email']       = 'testman@testman.com'
+    hash[:list_id] = '1'
+    hash[:email] = 'testman@testman.com'
 
     assert_raise RuntimeError do
       s.remove_contact(hash)
@@ -150,7 +146,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
       "User ID"=>nil,
       "City"=>nil
     }
-    actual =  s.select_contact({'list_id' => 1, 'email' => 'testman@testman.com' })
+    actual = s.select_contact({:list_id => 1, :email => 'testman@testman.com'})
 
     # to help debugging make sure all the keys that are expected have the expected value
     expected.each do |key, value|
@@ -167,9 +163,9 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     expect_send_request_api(select_contact_xml, silverpop_session_url).returns(MockHTTPartyResponse.new(200, "<omg />"))
 
     s.login
-    
+
     assert_raise RuntimeError do
-      s.select_contact({'list_id' => '1', 'email' => 'testman@testman.com' })
+      s.select_contact({:list_id => '1', :email => 'testman@testman.com'})
     end
   end
 
@@ -178,7 +174,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 
     expect_login
     expect_send_request_api(update_contact_xml, silverpop_session_url).returns(MockHTTPartyResponse.new(200, "<omg />"))
-    
+
     s.login
 
     fields = ActiveSupport::OrderedHash.new
@@ -186,7 +182,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     fields['2nd Zip Code'] = '01320'
 
     assert_raise RuntimeError do
-      s.update_contact(fields.merge({'list_id' => '1', 'email' => 'testman@testman.com'}))
+      s.update_contact(fields.merge({:list_id => '1', :email => 'testman@testman.com'}))
     end
   end
 
@@ -195,14 +191,14 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 
     expect_login
     expect_update_contact
-    
+
     s.login
 
     fields = ActiveSupport::OrderedHash.new
     fields['Zip Code'] = '01430'
     fields['2nd Zip Code'] = '01320'
 
-    assert_equal '2007408974', s.update_contact(fields.merge({'list_id' => '1', 'email' => 'testman@testman.com'}))
+    assert_equal '2007408974', s.update_contact(fields.merge({:list_id => '1', :email => 'testman@testman.com'}))
   end
 
   def test_send_mailing_fail
@@ -214,7 +210,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     s.login
 
     assert_raise RuntimeError do
-      s.send_mailing('email' => 'testman@testman.com', 'mailing_id' => 908220)
+      s.send_mailing(:email => 'testman@testman.com', :mailing_id => 908220)
     end
   end
 
@@ -226,7 +222,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 
     s.login
 
-    assert_equal true, s.send_mailing('email' => 'testman@testman.com', 'mailing_id' => 908220)
+    assert_equal true, s.send_mailing(:email => 'testman@testman.com', :mailing_id => 908220)
   end
 
   def test_schedule_mailing
@@ -238,14 +234,15 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     s.login
 
     assert_equal '1878843', s.schedule_mailing({
-      'list_id'      => 12345,
-      'template_id'  => 860866,
-      'mailing_name' => 'Test_Mailing_000',
-      'subject'      => 'Test Mailing #0', 
-      'from_name'    => 'Testman', 
-      'from_address' => 'testman@testman.com', 
-      'reply_to'     => 'testman@testman.com', 
-      'TEST_PARAM'   => 'This is external parameter generated by our system'})
+      :list_id => 12345,
+      :template_id => 860866,
+      :mailing_name => 'Test_Mailing_000',
+      :subject => 'Test Mailing #0',
+      :from_name => 'Testman',
+      :from_address => 'testman@testman.com',
+      :reply_to => 'testman@testman.com',
+      :TEST_PARAM => 'This is external parameter generated by our system'
+    })
   end
 
   def test_schedule_mailing_fail
@@ -258,14 +255,15 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 
     assert_raise RuntimeError do
       s.schedule_mailing({
-        'list_id'      => 12345,
-        'template_id'  => 860866,
-        'mailing_name' => 'Test_Mailing_000',
-        'subject'      => 'Test Mailing #0', 
-        'from_name'    => 'Testman', 
-        'from_address' => 'testman@testman.com', 
-        'reply_to'     => 'testman@testman.com', 
-        'TEST_PARAM'   => 'This is external parameter generated by our system'})
+        :list_id => 12345,
+        :template_id => 860866,
+        :mailing_name => 'Test_Mailing_000',
+        :subject => 'Test Mailing #0',
+        :from_name => 'Testman',
+        :from_address => 'testman@testman.com',
+        :reply_to => 'testman@testman.com',
+        :TEST_PARAM => 'This is external parameter generated by our system'
+      })
     end
   end
 
@@ -276,7 +274,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     expect_send_transact_mail
 
     s.login
-    assert_equal '1', s.send_transact_mail('email' => 'testman@testman.com', 'transaction_id' => '123awesome', 'campaign_id' => 9876, 'PASSWORD_RESET_LINK' => 'www.somelink.com')
+    assert_equal '1', s.send_transact_mail(:email => 'testman@testman.com', :transaction_id => '123awesome', :campaign_id => 9876, :PASSWORD_RESET_LINK => 'www.somelink.com')
   end
 
   def test_transact_email_fail
@@ -288,17 +286,17 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     s.login
 
     assert_raise RuntimeError do
-      s.send_transact_mail('email' => 'testman@testman.com', 'transaction_id' => '123awesome', 'campaign_id' => 9876, 'PASSWORD_RESET_LINK' => 'www.somelink.com')
+      s.send_transact_mail(:email => 'testman@testman.com', :transaction_id => '123awesome', :campaign_id => 9876, :PASSWORD_RESET_LINK => 'www.somelink.com')
     end
   end
 
   private
-  
+
   def new_silverpop
     s = Silverpopper::Client.new(
-      'user_name' => 'testman',
-      'password'  => 'pass',
-      'pod'       =>  5)    
+      :user_name => 'testman',
+      :password => 'pass',
+      :pod => 5)
   end
 
   # use mocha to test api calls, this mimicks
@@ -350,7 +348,6 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 </Envelope>
 "))
   end
-
 
   def expect_schedule_mailing
     expect_send_request_api(schedule_mailing_xml, silverpop_session_url).returns(MockHTTPartyResponse.new(200, "<Envelope>
@@ -415,7 +412,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
   </RESULT>
  </Body>
 </Envelope>
-")) 
+"))
   end
 
   def expect_send_request_transact(markup, url)
@@ -521,18 +518,6 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 '
   end
 
-  def send_mailing_xml
-'<?xml version="1.0" encoding="UTF-8"?>
-<Envelope>
- <Body>
-  <SendMailing>
-   <MailingId>908220</MailingId>
-   <RecipientEmail>testman@testman.com</RecipientEmail>
-  </SendMailing>
- </Body>
-</Envelope>
-'
-  end
   def update_contact_xml
 '<?xml version="1.0" encoding="UTF-8"?>
 <Envelope>
@@ -651,9 +636,9 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 '
   end
 
-
   class MockHTTPartyResponse
     attr_reader :code, :body
+
     def initialize(code, body)
       @code, @body = code, body
     end

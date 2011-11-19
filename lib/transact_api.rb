@@ -6,29 +6,29 @@ module Silverpopper::TransactApi
   # any additional arguments are used as personalization arguments; hash key is 
   # the personalization tag name, hash value is the personalization value
   def send_transact_mail(options={})
-    email          = options.delete('email')
-    transaction_id = options.delete('transaction_id')
-    campaign_id    = options.delete('campaign_id')
+    email          = options.delete(:email)
+    transaction_id = options.delete(:transaction_id)
+    campaign_id    = options.delete(:campaign_id)
 
     request_body = String.new
     xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
 
     xml.instruct!
-    xml.XTMAILING{
+    xml.XTMAILING do
       xml.CAMPAIGN_ID campaign_id
       xml.TRANSACTION_ID transaction_id
       xml.SEND_AS_BATCH 'false'
-      xml.RECIPIENT{
+      xml.RECIPIENT do
         xml.EMAIL email
         xml.BODY_TYPE 'HTML'
         options.each do |key, value|
-          xml.PERSONALIZATION{
+          xml.PERSONALIZATION do
             xml.TAG_NAME key
             xml.VALUE value
-          }
+          end
         end
-      }
-    }
+      end
+    end
 
     doc = send_transact_request(request_body)
     validate_transact_success!(doc, "failure to send transact message")
@@ -40,8 +40,7 @@ module Silverpopper::TransactApi
   # make transact api call, and parse the response with rexml
   def send_transact_request(markup)
     response = send_request(markup, 
-      "#{@transact_url}/XTMail#{@session_id}",
-      'transact')
+      "#{@transact_url}/XTMail#{@session_id}", 'transact')
     REXML::Document.new(response)
   end
 
@@ -54,8 +53,7 @@ module Silverpopper::TransactApi
 
   # does the xml document indicate a transact successful response?
   def transact_successful?(doc)
-    doc != nil &&
-      doc.elements['XTMAILING_RESPONSE'] != nil &&
+    doc != nil && doc.elements['XTMAILING_RESPONSE'] != nil &&
       doc.elements['XTMAILING_RESPONSE'].elements['ERROR_CODE'] != nil
   end
 end

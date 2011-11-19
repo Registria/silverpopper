@@ -11,7 +11,7 @@ module Silverpopper::Common
     })
     raise "Request Failed" unless resp.code == 200 || resp.code == 201
 
-    return resp.body
+    resp.body
   end
 
 end
