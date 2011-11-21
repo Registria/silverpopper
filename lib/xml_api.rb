@@ -1,17 +1,16 @@
 # Provide an interface for the Silverpop XMLAPI to
 # do basic interactions with the lead.
 module Silverpopper::XmlApi
-
   # Authenticate through the xml api
-  def login
+  def api_login
     request_body = String.new
     xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
     xml.instruct!
     xml.Envelope do
       xml.Body do
         xml.Login do
-          xml.USERNAME(self.user_name)
-          xml.PASSWORD(self.password)
+          xml.USERNAME(self.api_username)
+          xml.PASSWORD(self.api_password)
         end
       end
     end
@@ -21,7 +20,7 @@ module Silverpopper::XmlApi
   end
 
   # Expire the Session Id and forget the stored Session Id
-  def logout
+  def api_logout
     request_body = String.new
     xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
     xml.Envelope do
@@ -32,6 +31,164 @@ module Silverpopper::XmlApi
 
     send_xml_api_request(request_body)
     self.session_id = nil
+  end
+
+  # Extracts a lists of databases
+  #
+  # === Options
+  # :visibility
+  #   The visibility of the databases to return
+  # :list_type
+  #   Type of entity to return:
+  #     0 - databases
+  #     1 - queries
+  #     2 - databases/queries
+  #     5 - test lists
+  #     6 - seed lists
+  #     13 - suppression lists
+  #     15 - relational tables
+  #     18 - contact lists
+  # [:folder_id]
+  #   Specify a particular folder from which to return databases
+  # [:include_all_lists]
+  #   To return all databases within subfolders
+  # [:include_tags]
+  #   To return all Tags associated with the database
+  def get_lists(options={})
+    visibility = options[:visibility]
+    list_type = options[:list_type]
+    folder_id = options[:folder_id]
+    include_all_lists = options[:include_all_lists]
+    include_tags = options[:include_tags]
+
+    raise ArgumentError, "visibility option is required" unless visibility
+    raise ArgumentError, "list_type option is required" unless list_type
+
+    request_body = ''
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+
+    xml.instruct!
+    xml.Envelope do
+      xml.Body do
+        xml.GetLists do
+          xml.VISIBILITY visibility
+          xml.LIST_TYPE list_type
+          xml.FOLDER_ID folder_id if folder_id.present?
+          xml.INCLUDE_ALL_LISTS 'true' if include_all_lists.present?
+          xml.INCLUDE_TAGS 'true' if include_tags.present?
+        end
+      end
+    end
+
+    doc = send_xml_api_request(request_body)
+    results = {}
+
+    result_dom(doc).elements.each do |item|
+      next unless item.name == 'LIST'
+      results[item.elements['ID'].text] = item.elements['NAME'].text
+    end
+
+    results
+  end
+
+  # Import list using already uploaded source and map files
+  #
+  # === Options
+  # :map_file
+  #   The name of the Mapping file in the upload directory of the
+  #   FTP server to use for the import.
+  # :source_file
+  #   The name of the file containing the contact information to use
+  #   in the import. This file must reside in the upload directory
+  #   of the FTP Server.
+  # [:file_encoding]
+  #   Defines the encoding of the source file. Supported values are:
+  #     UTF-8
+  #     ISO-8859-1
+  def import_list(options={})
+    map_file = options[:map_file]
+    source_file = options[:source_file]
+    file_encoding = options[:file_encoding]
+
+    raise ArgumentError, "map_file is required" unless map_file
+    raise ArgumentError, "source_file is required" unless source_file
+
+    request_body = ''
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+
+    xml.instruct!
+    xml.Envelope do
+      xml.Body do
+        xml.ImportList do
+          xml.MAP_FILE map_file
+          xml.SOURCE_FILE source_file
+          xml.FILE_ENCODING file_encoding if file_encoding.present?
+        end
+      end
+    end
+
+    #debugger
+
+    doc = send_xml_api_request(request_body)
+    result_dom(doc).to_s
+  end
+
+  # Create a new contact list
+  # Returns the list id if successfull
+  #
+  # === Options
+  # :database_id
+  #   The ID of the database the new Contact List will be associated with
+  # :contact_list_name
+  #   The name of the Contact List to be created
+  # :visibility
+  #   Defines the visibility of the Contact List being created:
+  #     0 - private
+  #     1 - shared
+  def create_list(options={})
+    database_id = options[:database_id]
+    list_name = options[:contact_list_name]
+    visibility = options[:visibility]
+
+    raise ArgumentError, "database_id option is required" unless database_id
+    raise ArgumentError, "list_name option is required" unless list_name
+    raise ArgumentError, "visibility option is required" unless visibility
+
+    request_body = ''
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+    xml.instruct!
+    xml.Envelope do
+      xml.Body do
+        xml.CreateContactList do
+          xml.DATABASE_ID database_id
+          xml.CONTACT_LIST_NAME list_name
+          xml.VISIBILITY visibility
+        end
+      end
+    end
+
+    doc = send_xml_api_request(request_body)
+    result_dom(doc).elements['CONTACT_LIST_ID'].text rescue nil
+  end
+
+  # Check if given list exists and create a new one if given
+  # list not found in database. Return contact_list_id
+  #
+  # === Options
+  #   Are the same as for get_lists and create_list methods
+  # [force]
+  #   Ignore lists_cache and ask silverpop server each time
+  def sync_list(options, force=false)
+    lists = (not force and self.cached_lists.any?) ? self.cached_lists : get_lists(options)
+    self.cached_lists = lists
+
+    name = options[:contact_list_name]
+
+    if lists.values.include?(name)
+      lists.keys[lists.values.index(name)]
+    else
+      create_list(options)
+    end
   end
 
   # Insert a lead into silverpop
@@ -103,7 +260,7 @@ module Silverpopper::XmlApi
       end
     end
 
-    doc = send_xml_api_request(request_body)
+    send_xml_api_request(request_body)
     true
   end
 
@@ -259,7 +416,7 @@ module Silverpopper::XmlApi
   # Given a parsed xml response document for the silverpop api call
   # raise the given message unless the call was successful
   def send_xml_api_request(markup, message = nil)
-    result = send_request(markup, "#{@api_url}/XMLAPI#{@session_id}", 'api')
+    result = send_request(markup, "#{self.api_url}/XMLAPI#{@session_id}", 'api')
     doc = REXML::Document.new(result)
 
     return doc if silverpop_successful?(doc)
@@ -273,6 +430,5 @@ module Silverpopper::XmlApi
   # A helper method for setting the session_id when logging in
   def session_id=(session_id)
     @session_id = session_id.blank? ? nil : ";jsessionid=#{session_id}"
-    session_id
   end
 end

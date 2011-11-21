@@ -40,7 +40,7 @@ module Silverpopper::TransactApi
   # make transact api call, and parse the response with rexml
   def send_transact_request(markup)
     response = send_request(markup, 
-      "#{@transact_url}/XTMail#{@session_id}", 'transact')
+      "#{self.transact_url}/XTMail#{self.session_id}", 'transact')
     REXML::Document.new(response)
   end
 

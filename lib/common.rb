@@ -7,7 +7,7 @@ module Silverpopper::Common
   def send_request(markup, url, api_host)
     resp = HTTParty.post(url, :body => markup, :headers => {
       'Content-type' => 'text/xml;charset=UTF-8',
-      'X-Intended-Host' => api_host + @pod.to_s
+      'X-Intended-Host' => api_host + self.pod.to_s
     })
     raise "Request Failed" unless resp.code == 200 || resp.code == 201
 
