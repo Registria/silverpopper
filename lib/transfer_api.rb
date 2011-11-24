@@ -117,65 +117,61 @@ module Silverpopper::TransferApi
     xml = Builder::XmlMarkup.new(:target => map_body, :indent => 1)
 
     xml.instruct!
-    xml.Envelope do
-      xml.Body do
-        xml.LIST_IMPORT do
-          xml.LIST_INFO do
-            xml.ACTION map[:action] if map.has_key?(:action)
-            xml.LIST_TYPE map[:list_type] if map.has_key?(:list_type)
-            xml.LIST_NAME map[:list_name] if map.has_key?(:list_name)
-            xml.LIST_ID map[:list_id] if map.has_key?(:list_id)
-            xml.LIST_VISIBILITY map[:list_visibility] if map.has_key?(:list_visibility)
-            xml.LIST_DATE_FORMAT map[:list_date_format] if map.has_key?(:list_date_format)
-            xml.FILE_TYPE map[:file_type] if map.has_key?(:file_type)
-            xml.PARENT_FOLDER_PATH map[:parent_folder_path] if map.has_key?(:parent_folder_path)
-            xml.HASHEADERS !!map[:hasheaders] if map.has_key?(:hasheaders)
-            xml.DOUBLE_OPT_IN !!map[:double_opt_in] if map.has_key?(:double_opt_in)
-            xml.ENCODED_AS_MD5 !!map[:encoded_as_md5] if map.has_key?(:encoded_as_md5)
+    xml.LIST_IMPORT do
+      xml.LIST_INFO do
+        xml.ACTION map[:action] if map.has_key?(:action)
+        xml.LIST_TYPE map[:list_type] if map.has_key?(:list_type)
+        xml.LIST_NAME map[:list_name] if map.has_key?(:list_name)
+        xml.LIST_ID map[:list_id] if map.has_key?(:list_id)
+        xml.LIST_VISIBILITY map[:list_visibility] if map.has_key?(:list_visibility)
+        xml.LIST_DATE_FORMAT map[:list_date_format] if map.has_key?(:list_date_format)
+        xml.FILE_TYPE map[:file_type] if map.has_key?(:file_type)
+        xml.PARENT_FOLDER_PATH map[:parent_folder_path] if map.has_key?(:parent_folder_path)
+        xml.HASHEADERS !!map[:hasheaders] if map.has_key?(:hasheaders)
+        xml.DOUBLE_OPT_IN !!map[:double_opt_in] if map.has_key?(:double_opt_in)
+        xml.ENCODED_AS_MD5 !!map[:encoded_as_md5] if map.has_key?(:encoded_as_md5)
 
-            if map[:sync_fields].present?
-              xml.SYNC_FIELDS do
-                map[:sync_fields].each do |sync_field|
-                  xml.SYNC_FIELD do
-                    xml.NAME sync_field[:name]
-                  end
-                end
+        if map[:sync_fields].present?
+          xml.SYNC_FIELDS do
+            map[:sync_fields].each do |sync_field|
+              xml.SYNC_FIELD do
+                xml.NAME sync_field[:name]
               end
             end
           end
+        end
+      end
 
-          if map[:columns].present?
-            xml.COLUMNS do
-              map[:columns].each do |column|
-                xml.COLUMN do
-                  xml.NAME column[:name] if column.has_key?(:name)
-                  xml.TYPE column[:type] if column.has_key?(:type)
-                  xml.IS_REQUIRED !!column[:is_required] if column.has_key?(:is_required)
-                  xml.KEY_COLUMN column[:key_column] if column.has_key?(:key_column)
-                  xml.DEFAULT_VALUE column[:default_value] if column.has_key?(:default_value)
-                end
-              end
+      if map[:columns].present?
+        xml.COLUMNS do
+          map[:columns].each do |column|
+            xml.COLUMN do
+              xml.NAME column[:name] if column.has_key?(:name)
+              xml.TYPE column[:type] if column.has_key?(:type)
+              xml.IS_REQUIRED !!column[:is_required] if column.has_key?(:is_required)
+              xml.KEY_COLUMN column[:key_column] if column.has_key?(:key_column)
+              xml.DEFAULT_VALUE column[:default_value] if column.has_key?(:default_value)
             end
           end
+        end
+      end
 
-          if map[:mapping].present?
-            xml.MAPPING do
-              map[:mapping].each do |m|
-                xml.COLUMN do
-                  xml.INDEX m[:index] if m.has_key?(:index)
-                  xml.NAME m[:name] if m.has_key?(:name)
-                  xml.INCLUDE !!m[:include] if m.has_key?(:include)
-                end
-              end
+      if map[:mapping].present?
+        xml.MAPPING do
+          map[:mapping].each do |m|
+            xml.COLUMN do
+              xml.INDEX m[:index] if m.has_key?(:index)
+              xml.NAME m[:name] if m.has_key?(:name)
+              xml.INCLUDE !!m[:include] if m.has_key?(:include)
             end
           end
+        end
+      end
 
-          if map[:contact_lists].present?
-            xml.CONTACT_LISTS do
-              map[:contact_lists].each do |list|
-                xml.CONTACT_LIST_ID list[:contact_list_id] if list.has_key?(:contact_list_id)
-              end
-            end
+      if map[:contact_lists].present?
+        xml.CONTACT_LISTS do
+          map[:contact_lists].each do |list|
+            xml.CONTACT_LIST_ID list[:contact_list_id] if list.has_key?(:contact_list_id)
           end
         end
       end
