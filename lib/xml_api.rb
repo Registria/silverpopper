@@ -91,6 +91,33 @@ module Silverpopper::XmlApi
     results
   end
 
+  # Get job status by id
+  # Return array with the job status and description
+  #
+  # job_id
+  #   Identifies the Engage Background Job created and scheduled
+  #   as a result of another API call.
+  def get_job_status(job_id)
+    raise ArgumentError, "Job ID is required" unless job_id.present?
+
+    request_body = ''
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+
+    xml.instruct!
+    xml.Envelope do
+      xml.Body do
+        xml.GetJobStatus do
+          xml.JOB_ID job_id
+        end
+      end
+    end
+
+    doc = send_xml_api_request(request_body)
+    status = result_dom(doc).elements['JOB_STATUS'].text rescue nil
+    desc = result_dom(doc).elements['JOB_DESCRIPTION'].text rescue nil
+    [status, desc]
+  end
+
   # Import list using already uploaded source and map files
   #
   # === Options
@@ -127,10 +154,8 @@ module Silverpopper::XmlApi
       end
     end
 
-    #debugger
-
     doc = send_xml_api_request(request_body)
-    result_dom(doc).to_s
+    result_dom(doc).elements['JOB_ID'].text rescue nil
   end
 
   # Create a new contact list
