@@ -98,7 +98,7 @@ module Silverpopper::XmlApi
   #   Identifies the Engage Background Job created and scheduled
   #   as a result of another API call.
   def get_job_status(job_id)
-    raise ArgumentError, "Job ID is required" unless job_id.present?
+    raise ArgumentError, "job_id is required" unless job_id.present?
 
     request_body = ''
     xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
@@ -137,8 +137,8 @@ module Silverpopper::XmlApi
     source_file = options[:source_file]
     file_encoding = options[:file_encoding]
 
-    raise ArgumentError, "map_file is required" unless map_file
-    raise ArgumentError, "source_file is required" unless source_file
+    raise ArgumentError, ":map_file is required" unless map_file
+    raise ArgumentError, ":source_file is required" unless source_file
 
     request_body = ''
     xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
@@ -175,9 +175,9 @@ module Silverpopper::XmlApi
     list_name = options[:contact_list_name]
     visibility = options[:visibility]
 
-    raise ArgumentError, "database_id option is required" unless database_id
-    raise ArgumentError, "list_name option is required" unless list_name
-    raise ArgumentError, "visibility option is required" unless visibility
+    raise ArgumentError, ":database_id option is required" unless database_id
+    raise ArgumentError, ":list_name option is required" unless list_name
+    raise ArgumentError, ":visibility option is required" unless visibility
 
     request_body = ''
     xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
@@ -208,6 +208,7 @@ module Silverpopper::XmlApi
     self.cached_lists = lists
 
     name = options[:contact_list_name]
+    raise ArgumentError, ":contact_list_name option is required" unless name
 
     if lists.values.include?(name)
       lists.keys[lists.values.index(name)]
@@ -423,6 +424,39 @@ module Silverpopper::XmlApi
 
     doc = send_xml_api_request(request_body)
     result_dom(doc).elements['MAILING_ID'].first.to_s
+  end
+
+  # Extracts a listing of mailings sent for an organization for a
+  # specified date range.
+  #
+  # === Options
+  # See the Silverpop XML API docummentation,
+  # chapter "Get a List of Sent Mailings for an Org".
+  def get_sent_mailings_for_org(options={})
+    raise ArgumentError, ":date_start is required" unless options.has_key?(:date_start)
+    raise ArgumentError, ":date_end is required" unless options.has_key?(:date_end)
+
+    options[:date_start] =
+      options[:date_start].utc.strftime("%m/%d/%Y %H:%M:%S") unless options[:date_start].is_a?(String)
+    options[:date_end] =
+      options[:date_end].utc.strftime("%m/%d/%Y %H:%M:%S") unless options[:date_end].is_a?(String)
+
+    request_body = String.new
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+
+    xml.instruct!
+    xml.Envelope do
+      xml.Body do
+        xml.GetSentMailingsForOrg do
+          options.stringify_keys.each do |k, v|
+            eval("xml.#{k.upcase}(v)")
+          end
+        end
+      end
+    end
+
+    doc = send_xml_api_request(request_body)
+    Hash.from_xml(result_dom(doc).to_s)["RESULT"]["Mailing"]
   end
 
   protected
