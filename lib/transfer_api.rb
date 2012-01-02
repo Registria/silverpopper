@@ -86,6 +86,12 @@ module Silverpopper::TransferApi
     true
   end
 
+  def get_file(fname, path_to_save)
+    path_to_save ||= "#{Rails.root}/tmp/#{fname.split("/").last}"
+    self.ftp.getbinaryfile(fname, path_to_save, Net::FTP::DEFAULT_BLOCKSIZE)
+    File.open(path_to_save)
+  end
+
   protected
 
   def transfer_list(map, data, name)
@@ -104,7 +110,7 @@ module Silverpopper::TransferApi
     source = source.read if source.respond_to?(:read)
 
     self.ftp.chdir("/upload")
-    self.ftp.storbinary("STOR " + filename, StringIO.new(source), Net::FTP::DEFAULT_BLOCKSIZE)
+    self.ftp.storbinary("STOR #{filename}", StringIO.new(source), Net::FTP::DEFAULT_BLOCKSIZE)
 
     true
   end
