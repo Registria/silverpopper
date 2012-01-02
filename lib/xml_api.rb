@@ -16,7 +16,7 @@ module Silverpopper::XmlApi
     end
 
     doc = send_xml_api_request(request_body)
-    self.session_id = result_dom(doc).elements['SESSIONID'].text
+    self.session_id = result_dom(doc)['SESSIONID']
   end
 
   # Expire the Session Id and forget the stored Session Id
@@ -31,6 +31,33 @@ module Silverpopper::XmlApi
 
     send_xml_api_request(request_body)
     self.session_id = nil
+  end
+
+  # Get job status by id
+  # Return array with the job status and description
+  #
+  # job_id
+  #   Identifies the Engage Background Job created and scheduled
+  #   as a result of another API call.
+  def get_job_status(job_id)
+    raise ArgumentError, "job_id is required" unless job_id.present?
+
+    request_body = ''
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+
+    xml.instruct!
+    xml.Envelope do
+      xml.Body do
+        xml.GetJobStatus do
+          xml.JOB_ID job_id
+        end
+      end
+    end
+
+    doc = send_xml_api_request(request_body)
+    status = result_dom(doc)['JOB_STATUS'] rescue nil
+    desc = result_dom(doc)['JOB_DESCRIPTION'] rescue nil
+    [status, desc]
   end
 
   # Extracts a lists of databases
@@ -81,41 +108,7 @@ module Silverpopper::XmlApi
     end
 
     doc = send_xml_api_request(request_body)
-    results = {}
-
-    result_dom(doc).elements.each do |item|
-      next unless item.name == 'LIST'
-      results[item.elements['ID'].text] = item.elements['NAME'].text
-    end
-
-    results
-  end
-
-  # Get job status by id
-  # Return array with the job status and description
-  #
-  # job_id
-  #   Identifies the Engage Background Job created and scheduled
-  #   as a result of another API call.
-  def get_job_status(job_id)
-    raise ArgumentError, "job_id is required" unless job_id.present?
-
-    request_body = ''
-    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
-
-    xml.instruct!
-    xml.Envelope do
-      xml.Body do
-        xml.GetJobStatus do
-          xml.JOB_ID job_id
-        end
-      end
-    end
-
-    doc = send_xml_api_request(request_body)
-    status = result_dom(doc).elements['JOB_STATUS'].text rescue nil
-    desc = result_dom(doc).elements['JOB_DESCRIPTION'].text rescue nil
-    [status, desc]
+    result_dom(doc)['LIST']
   end
 
   # Import list using already uploaded source and map files
@@ -155,7 +148,7 @@ module Silverpopper::XmlApi
     end
 
     doc = send_xml_api_request(request_body)
-    result_dom(doc).elements['JOB_ID'].text rescue nil
+    result_dom(doc)['JOB_ID'] rescue nil
   end
 
   # Create a new contact list
@@ -193,7 +186,7 @@ module Silverpopper::XmlApi
     end
 
     doc = send_xml_api_request(request_body)
-    result_dom(doc).elements['CONTACT_LIST_ID'].text rescue nil
+    result_dom(doc)['CONTACT_LIST_ID'] rescue nil
   end
 
   # Check if given list exists and create a new one if given
@@ -210,11 +203,10 @@ module Silverpopper::XmlApi
     name = options[:contact_list_name]
     raise ArgumentError, ":contact_list_name option is required" unless name
 
-    if lists.values.include?(name)
-      lists.keys[lists.values.index(name)]
-    else
-      create_list(options)
-    end
+    list = lists.find { |l| l['NAME'].downcase == name.downcase }
+    return list if list.present?
+
+    create_list(options)
   end
 
   # Insert a lead into silverpop
@@ -254,7 +246,7 @@ module Silverpopper::XmlApi
     end
 
     doc = send_xml_api_request(request_body)
-    result_dom(doc).elements['RecipientId'].text rescue nil
+    result_dom(doc)['RecipientId'] rescue nil
   end
 
   # Remove the contact from a list.
@@ -312,12 +304,7 @@ module Silverpopper::XmlApi
     end
 
     doc = send_xml_api_request(request_body)
-
-    result_dom(doc).elements['COLUMNS'].collect do |i|
-      i.respond_to?(:elements) ? [i.elements['NAME'].first, i.elements['VALUE'].first] : nil
-    end.compact.inject(Hash.new) do |hash, value|
-      hash.merge({value[0].to_s => (value[1].blank? ? nil : value[1].to_s)})
-    end
+    result_dom(doc)
   end
 
   # Update the column values of a lead in silverpop.
@@ -351,7 +338,7 @@ module Silverpopper::XmlApi
     end
 
     doc = send_xml_api_request(request_body)
-    result_dom(doc).elements['RecipientId'].text rescue nil
+    result_dom(doc)['RecipientId']
   end
 
   # Send an email to a user with a pre existing template.  
@@ -423,14 +410,14 @@ module Silverpopper::XmlApi
     end
 
     doc = send_xml_api_request(request_body)
-    result_dom(doc).elements['MAILING_ID'].first.to_s
+    result_dom(doc)['MAILING_ID']
   end
 
   # Extracts a listing of mailings sent for an organization for a
   # specified date range.
   #
   # === Options
-  # See the Silverpop XML API docummentation,
+  # See the Silverpop XML API documentation,
   # chapter "Get a List of Sent Mailings for an Org".
   def get_sent_mailings_for_org(options={})
     raise ArgumentError, ":date_start is required" unless options.has_key?(:date_start)
@@ -448,27 +435,65 @@ module Silverpopper::XmlApi
     xml.Envelope do
       xml.Body do
         xml.GetSentMailingsForOrg do
-          options.stringify_keys.each do |k, v|
-            eval("xml.#{k.upcase}(v)")
-          end
+          apply_options!(xml, options)
         end
       end
     end
 
     doc = send_xml_api_request(request_body)
-    Hash.from_xml(result_dom(doc).to_s)["RESULT"]["Mailing"]
+    result_dom(doc)["Mailing"]
+  end
+
+  # This interface allows exporting unique contact-level events and
+  # creates a .zip file containing a single flat file with all metrics.
+  # You can request all (or a subset) of the Event Types.
+  #
+  # === Options
+  # See the Silverpop XML API documentation,
+  # chapter "Export Raw Contact Events".
+  def raw_recipient_data_export(options={})
+    request_body = String.new
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+
+    xml.instruct!
+    xml.Envelope do
+      xml.Body do
+        xml.RawRecipientDataExport do
+          apply_options!(xml, options)
+        end
+      end
+    end
+
+    doc = send_xml_api_request(request_body)
+    result_dom(doc)
   end
 
   protected
 
+  def apply_options!(xml, options)
+    options.stringify_keys.each do |key, value|
+      if value.is_a?(String)
+        eval("xml.#{key.upcase}(value)")
+      elsif value.is_a?(Array)
+        eval("xml.#{key.upcase} { value.each { |suboptions| apply_options!(xml, suboptions) } }")
+      elsif value.is_a?(Hash)
+        eval("xml.#{key.upcase} { apply_options!(xml, value) }")
+      elsif value.is_a?(TrueClass)
+        eval("xml.#{key.upcase}")
+      end
+    end
+
+    nil
+  end
+
   # Given a silverpop api response document, was the api call successful?
   def silverpop_successful?(doc)
-    result_dom(doc).elements['SUCCESS'].text.downcase == 'true' rescue false
+    result_dom(doc)['SUCCESS'].downcase == 'true' rescue false
   end
 
   # Given a silverpop api response document, parse out the result
-  def result_dom(dom)
-    dom.elements['Envelope'].elements['Body'].elements['RESULT']
+  def result_dom(doc)
+    doc['Envelope']['Body']['RESULT']
   end
 
   # Execute an xml api request, and parse the response
@@ -476,14 +501,12 @@ module Silverpopper::XmlApi
   # raise the given message unless the call was successful
   def send_xml_api_request(markup, message = nil)
     result = send_request(markup, "#{self.api_url}/XMLAPI#{@session_id}", 'api')
-    doc = REXML::Document.new(result)
+    doc = Hash.from_xml(REXML::Document.new(result).to_s)
 
     return doc if silverpop_successful?(doc)
 
-    raise message || ("#{doc.elements['Envelope'].elements['Body'].elements['Fault'].
-      elements['FaultString'].text} (Error ID: #{doc.elements['Envelope'].elements['Body'].
-      elements['Fault'].elements['detail'].elements['error'].elements['errorid'].
-      text})" rescue "Operation failed: #{markup}")
+    fault = doc['Envelope']['Body']['Fault']
+    raise message || ("#{fault['FaultString']} (Error ID: #{fault['detail']['error']['errorid']})" rescue "Operation failed: #{result}")
   end
 
   # A helper method for setting the session_id when logging in
