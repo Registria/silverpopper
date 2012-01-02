@@ -14,4 +14,19 @@ module Silverpopper::Common
     resp.body
   end
 
+  def apply_xml_options!(xml, options)
+    options.stringify_keys.each do |key, value|
+      if [String, Fixnum, Float].include?(value.class)
+        eval("xml.#{key.upcase}(value)")
+      elsif value.is_a?(Array)
+        value.each { |suboptions| apply_xml_options!(xml, suboptions) }
+      elsif value.is_a?(Hash)
+        eval("xml.#{key.upcase} { apply_xml_options!(xml, value) }")
+      elsif value.is_a?(TrueClass)
+        eval("xml.#{key.upcase}")
+      end
+    end
+
+    nil
+  end
 end

@@ -435,7 +435,7 @@ module Silverpopper::XmlApi
     xml.Envelope do
       xml.Body do
         xml.GetSentMailingsForOrg do
-          apply_options!(xml, options)
+          apply_xml_options!(xml, options)
         end
       end
     end
@@ -459,7 +459,7 @@ module Silverpopper::XmlApi
     xml.Envelope do
       xml.Body do
         xml.RawRecipientDataExport do
-          apply_options!(xml, options)
+          apply_xml_options!(xml, options)
         end
       end
     end
@@ -469,22 +469,6 @@ module Silverpopper::XmlApi
   end
 
   protected
-
-  def apply_options!(xml, options)
-    options.stringify_keys.each do |key, value|
-      if value.is_a?(String)
-        eval("xml.#{key.upcase}(value)")
-      elsif value.is_a?(Array)
-        eval("xml.#{key.upcase} { value.each { |suboptions| apply_options!(xml, suboptions) } }")
-      elsif value.is_a?(Hash)
-        eval("xml.#{key.upcase} { apply_options!(xml, value) }")
-      elsif value.is_a?(TrueClass)
-        eval("xml.#{key.upcase}")
-      end
-    end
-
-    nil
-  end
 
   # Given a silverpop api response document, was the api call successful?
   def silverpop_successful?(doc)
