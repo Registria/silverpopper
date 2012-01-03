@@ -87,10 +87,13 @@ module Silverpopper::TransferApi
   end
 
   def get_file(fname, path_to_save = nil)
-    path_to_save ||= File.join(Rails.root, "tmp/silverpop", fname.split("/").last)
+    path_to_save ||= File.join(Rails.root, "tmp/silverpop")
+    local_file_path = File.join(path_to_save, fname.split("/").last)
+
     FileUtils.mkdir_p(path_to_save)
-    self.ftp.getbinaryfile(fname, path_to_save, 1024)
-    path_to_save
+    self.ftp.getbinaryfile(fname, local_file_path, 1024)
+
+    local_file_path
   end
 
   protected
