@@ -186,7 +186,7 @@ module Silverpopper::XmlApi
     end
 
     doc = send_xml_api_request(request_body)
-    result_dom(doc)['CONTACT_LIST_ID'] rescue nil
+    result_dom(doc)['CONTACT_LIST_ID']
   end
 
   # Check if given list exists and create a new one if given
@@ -210,13 +210,13 @@ module Silverpopper::XmlApi
 
     list = lists.find do |l|
       if parent_name.present?
-        l['NAME'] == name and l["PARENT_NAME"] == parent_name
+        l['NAME'] == name and l['PARENT_NAME'] == parent_name
       else
         l['NAME'] == name
       end
     end
 
-    return list if list.present?
+    return list['ID'] if list.present?
     create_list(options)
   end
 
