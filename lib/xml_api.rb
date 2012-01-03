@@ -194,6 +194,9 @@ module Silverpopper::XmlApi
   #
   # === Options
   #   Are the same as for get_lists and create_list methods
+  # [:parent_name]
+  #   To check list matches more accuratelly by comparing list
+  #   parent name
   # [force]
   #   Ignore lists_cache and ask silverpop server each time
   def sync_list(options, force=false)
@@ -203,9 +206,17 @@ module Silverpopper::XmlApi
     name = options[:contact_list_name]
     raise ArgumentError, ":contact_list_name option is required" unless name
 
-    list = lists.find { |l| l['NAME'].downcase == name.downcase }
-    return list if list.present?
+    parent_name = options.delete(:parent_name)
 
+    list = lists.find do |l|
+      if parent_name.present?
+        l['NAME'] == name and l["PARENT_NAME"] == parent_name
+      else
+        l['NAME'] == name
+      end
+    end
+
+    return list if list.present?
     create_list(options)
   end
 
