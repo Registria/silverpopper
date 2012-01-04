@@ -452,7 +452,7 @@ module Silverpopper::XmlApi
     end
 
     doc = send_xml_api_request(request_body)
-    result_dom(doc)["Mailing"]
+    result_dom(doc)["Mailing"] || []
   end
 
   # This interface allows exporting unique contact-level events and
