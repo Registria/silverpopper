@@ -81,7 +81,7 @@ module Silverpopper::TransferApi
   #     given contact lists
   #     :contact_list_id
   # :data
-  #   A source to export (could be in any format)
+  #   A source to export (could be a file or other IO)
   # :name
   #   The name for the file which will be stored on the ftp
   #   (map file will be stored under the same name with .map.xml suffix)
@@ -120,10 +120,13 @@ module Silverpopper::TransferApi
 
   # Stream the given source to the ftp
   def stor_file(source, filename)
-    source = source.read if source.respond_to?(:read)
-
     self.ftp.chdir("/upload")
-    self.ftp.storbinary("STOR #{filename}", StringIO.new(source), Net::FTP::DEFAULT_BLOCKSIZE)
+
+    if source.is_a?(File)
+      self.ftp.putbinaryfile(source, filename, Net::FTP::DEFAULT_BLOCKSIZE)
+    else
+      self.ftp.storbinary("STOR #{filename}", StringIO.new(source), Net::FTP::DEFAULT_BLOCKSIZE)
+    end
 
     true
   end
