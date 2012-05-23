@@ -13,6 +13,17 @@ module Silverpopper::TransferApi
     self.ftp.close
   end
 
+  # Check ftp status
+  def ftp_logged_in?
+    begin
+      self.ftp.noop
+    rescue Net::FTPConnectionError
+      false
+    else
+      true
+    end
+  end
+
   # Clean up the given ftp directory
   def ftp_cleanup(dir)
     raise ArgumentError, "expected to get some directory to cleanup" unless dir.present?
@@ -74,13 +85,11 @@ module Silverpopper::TransferApi
   # :name
   #   The name for the file which will be stored on the ftp
   #   (map file will be stored under the same name with .map.xml suffix)
-  def transfer_lists(sources)
-    sources.each do |source|
-      map = source[:map]
-      data = source[:data]
-      name = source[:name]
+  def transfer_lists(*sources)
+    ftp_login unless ftp_logged_in?
 
-      transfer_list(map, data, name)
+    sources.flatten.each do |source|
+      transfer_list(source[:map], source[:data], source[:name])
     end
 
     true
