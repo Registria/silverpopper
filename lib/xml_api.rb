@@ -151,6 +151,100 @@ module Silverpopper::XmlApi
     result_dom(doc)['JOB_ID'] rescue nil
   end
 
+  # Export list using LIST_ID
+  #
+  # === Options
+  # :list_id
+  #   Unique identifier for the database, query, or contact list Engage is exporting.
+  # :export_type
+  #   Specifies which contacts to export. Valid values are:
+  #     ALL – export entire database.
+  #     OPT_IN – export only currently opted-in contacts.
+  #     OPT_OUT – export only currently opted-out contacts.
+  #     UNDELIVERABLE – export only contacts who are currently marked as undeliverable.
+  # :export_format
+  #   Specifies the format (file type) for the exported data. Valid values are:
+  #     CSV – create a comma-separated values file
+  #     TAB – create a tab-separated values file
+  #     PIPE – create a pipe-separated values file
+  # [:email]
+  #   If specified, this email address receives notification when the job is complete.
+  # [:file_encoding]
+  #   Defines the encoding of the source file. Supported values are:
+  #     UTF-8
+  #     ISO-8859-1
+  # [:add_to_stored_files]
+  #   Use the ADD_TO_STORED_FILES parameter to write the output to the
+  #   Stored Files folder within Engage.
+  #   If you omit the ADD_TO_STORED_FILES parameter, Engage will move
+  #   exported files to the download directory of the user ’ s FTP space.
+  # [:date_start]
+  #   Specifies the beginning boundary of information to export (relative to
+  #   the last modified date).If time is included, it must be in 24-hour format.
+  # [:date_end]
+  #   Specifies the ending boundary of information to export (relative to the
+  #   last modified date).If time is included, it must be in 24-hour format.
+  # [:list_date_format]
+  #   Used to specify the date format of the date fields in your exported file if date
+  #   format differs from "mm/dd/yyyy" (month, day, and year can be in any order
+  #   you choose).
+  #   Valid values for Month are :
+  #     mm (e.g. 01)
+  #     m (e.g. 1)
+  #     mon (e.g.Jan)
+  #     month (e.g.January)
+  #   Valid values for Day are :
+  #     dd (e.g. 02)
+  #     d (e.g. 2)
+  #   Valid values for Year are :
+  #     yyyy (e.g. 1999)
+  #     yy (e.g. 99)
+  #   Separators may be up to two characters in length and can consist of periods,
+  #   commas, question marks, spaces, and forward slashes (/).
+  #   Examples:
+  #     If dates in your file are formatted as "Jan 2, 1975" your
+  #     LIST_DATE_FORMAT would be "mon d, yyyy".
+  #
+  #     If dates in your file are formatted as "1975/ 09/02" your
+  #     LIST_DATE_FORMAT would be "yyyy/mm/dd".
+  def export_list(options={})
+    list_id = options[:list_id]
+
+    raise ArgumentError, ":list_id option is required" unless list_id.present?
+
+    export_type = options[:export_type] || "ALL"
+    export_format = options[:export_format] || "CSV"
+    email = options[:email]
+    file_encoding = options[:file_encoding]
+    add_to_stored_files = options[:add_to_stored_files]
+    date_start = options[:date_start]
+    date_end = options[:date_end]
+    list_date_format = options[:list_date_format]
+
+    request_body = ''
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+    xml.instruct!
+    xml.Envelope do
+      xml.Body do
+        xml.ExportList do
+          xml.LIST_ID list_id
+          xml.EXPORT_TYPE export_type
+          xml.EXPORT_FORMAT export_format
+
+          xml.EMAIL email if email.present?
+          xml.FILE_ENCODING file_encoding if file_encoding.present?
+          xml.ADD_TO_STORED_FILES add_to_stored_files if add_to_stored_files
+          xml.DATE_START date_start if date_start.present?
+          xml.DATE_END date_end if date_end.present?
+          xml.LIST_DATE_FORMAT list_date_format if list_date_format.present?
+        end
+      end
+    end
+
+    doc = send_xml_api_request(request_body)
+    result_dom(doc)
+  end
+
   # Create a new contact list
   # Returns the list id if successfull
   #

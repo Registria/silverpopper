@@ -100,6 +100,8 @@ module Silverpopper::TransferApi
     local_file_path = File.join(path_to_save, fname.split("/").last)
 
     FileUtils.mkdir_p(path_to_save)
+
+    ftp_login unless ftp_logged_in?
     self.ftp.getbinaryfile(fname, local_file_path, 1024)
 
     local_file_path
