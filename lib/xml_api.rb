@@ -111,6 +111,46 @@ module Silverpopper::XmlApi
     result_dom(doc)['LIST']
   end
 
+  # Check if given list exists and create a new one if given
+  # list not found in database. Return contact_list_id
+  #
+  # === Options
+  #   Are the same as for get_lists and create_list methods
+  # [:contact_list_name]
+  #   To check list matches more accuratelly by comparing list
+  #   parent name
+  # [force]
+  #   Ignore lists_cache and ask silverpop server each time
+  def get_list(options, force = false)
+    lists = if force or not self.cached_lists.any?
+      self.cached_lists = get_lists(options)
+    else
+      self.cached_lists
+    end
+
+    name = options[:contact_list_name]
+    parent_name = options.delete(:parent_name)
+
+    raise ArgumentError, ":contact_list_name is required" unless name
+
+    lists.find { |l|
+      if parent_name.present?
+        l['NAME'] == name and l['PARENT_NAME'] == parent_name
+      else
+        l['NAME'] == name
+      end
+    }
+  end
+
+  # Check if given list exists and create a new one if given
+  # list not found in database. Return contact_list_id
+  #
+  # === Options
+  # Same as for get_list call
+  def sync_list(options, force = false)
+    (get_list(options, force)['ID'] rescue nil) || create_list(options)
+  end
+
   # Import list using already uploaded source and map files
   #
   # === Options
@@ -283,38 +323,123 @@ module Silverpopper::XmlApi
     result_dom(doc)['CONTACT_LIST_ID']
   end
 
-  # Check if given list exists and create a new one if given
-  # list not found in database. Return contact_list_id
+  # Create a new query of an Engage database.
+  # Returns created query id if successful
   #
   # === Options
-  #   Are the same as for get_lists and create_list methods
-  # [:parent_name]
-  #   To check list matches more accuratelly by comparing list
-  #   parent name
-  # [force]
-  #   Ignore lists_cache and ask silverpop server each time
-  def sync_list(options, force=false)
-    lists = (not force and self.cached_lists.any?) ? self.cached_lists : get_lists(options)
-    self.cached_lists = lists
+  # :query_name
+  #   The name of the new query
+  # :parent_list_id
+  #   The id of the database being queried
+  # :visibility
+  #   Visibility of the new query, default is 0
+  # :criteria
+  #   Describes the expressions to perform one or more columns
+  #   in the database
+  # [:behavior]
+  #   Filters mailing contacts by their activity
+  def create_query(options)
+    raise ArgumentError, "Query name is not present" unless options[:query_name]
+    raise ArgumentError, "Parent list id is not present" unless options[:parent_list_id]
+    raise ArgumentError, "Criteria is required" unless options[:criteria]
 
-    name = options[:contact_list_name]
-    raise ArgumentError, ":contact_list_name option is required" unless name
+    options[:visibility] ||= 0
 
-    parent_name = options.delete(:parent_name)
+    request_body = ''
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+    xml.instruct!
 
-    list = lists.find do |l|
-      if parent_name.present?
-        l['NAME'] == name and l['PARENT_NAME'] == parent_name
-      else
-        l['NAME'] == name
+    xml.Envelope do
+      xml.Body do
+        xml.CreateQuery do
+          xml.QUERY_NAME options[:query_name]
+          xml.PARENT_LIST_ID options[:parent_list_id]
+          xml.VISIBILITY options[:visibility]
+
+          xml.PARENT_FOLDER_ID options[:parent_folder_id]
+          xml.SELECT_COLUMNS options[:select_columns]
+          xml.ALLOW_FIELD_CHANGE options[:allow_field_change]
+
+          xml.CRITERIA do
+            xml.TYPE options[:criteria][:type] if options[:criteria].has_key?(:type)
+
+            options[:criteria][:expressions].each do |exp|
+              xml.EXPRESSION do
+                xml.TYPE exp[:type] if exp.has_key?(:type)
+                xml.COLUMN_NAME exp[:column_name] if exp.has_key?(:column_name)
+                xml.OPERATORS exp[:operators] if exp.has_key?(:operators)
+                xml.VALUES exp[:values] if exp.has_key?(:values)
+                xml.TABLE_ID exp[:table_id] if exp.has_key?(:table_id)
+                xml.LEFT_PARENS exp[:left_parens] if exp.has_key?(:left_parens)
+                xml.RIGHT_PARENS exp[:right_parens] if exp.has_key?(:right_parens)
+                xml.AND_OR exp[:and_or] if exp.has_key?(:and_or)
+                if exp[:rt_expressions]
+                  exp[:rt_expressions].each do |rt_exp|
+                    xml.RT_EXPRESSION do
+                      xml.TYPE rt_exp[:type] if rt_exp.has_key?(:type)
+                      xml.COLUMN_NAME rt_exp[:column_name] if rt_exp.has_key?(:column_name)
+                      xml.OPERATORS rt_exp[:operators] if rt_exp.has_key?(:operators)
+                      xml.VALUES rt_exp[:values] if rt_exp.has_key?(:values)
+                      xml.LEFT_PARENS rt_exp[:left_parens] if rt_exp.has_key?(:left_parens)
+                      xml.RIGHT_PARENS rt_exp[:right_parens] if rt_exp.has_key?(:right_parens)
+                      xml.AND_OR rt_exp[:and_or] if rt_exp.has_key?(:and_or)
+                    end
+                  end
+                end
+              end
+            end
+          end
+
+          if options[:behavior]
+            xml.BEHAVIOR do
+              xml.OPTION_OPERATOR options[:behavior] if options.has_key?(:behavior)
+              xml.TYPE_OPERATOR options[:type_operator] if options.has_key?(:type_operator)
+              xml.MAILING_ID options[:mailing_id] if options.has_key?(:mailing_id)
+              xml.REPORT_ID options[:report_id] if options.has_key?(:report_id)
+              xml.LINK_NAME options[:link_name] if options.has_key?(:link_name)
+              xml.WHERE_OPERATOR options[:where_operator] if options.has_key?(:where_operator)
+              xml.CRITERIA_OPERATOR options[:criteria_operator] if options.has_key?(:criteria_operator)
+              xml.VALUES options[:values] if options.has_key?(:values)
+            end
+          end
+        end
       end
     end
 
-    return list['ID'] if list.present?
-    create_list(options)
+    doc = send_xml_api_request(request_body)
+    result_dom(doc)['ListId']
   end
 
-  # Insert a lead into silverpop
+  # Run query and calculate the number of contacts
+  # Returns the job id if successfull
+  #
+  # === Options
+  # :query_id
+  #   The id of the query to be calculated
+  # :email
+  #   If specified, Engage sends a notiffication email
+  #   when job is complete
+  def calculate_query(options)
+    raise ArgumentError, "Query Id must is required" unless options[:query_id]
+
+    request_body = ''
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+    xml.instruct!
+
+    xml.Envelope do
+      xml.Body do
+        xml.CalculateQuery do
+          xml.QUERY_ID options[:query_id]
+          xml.EMAIL options[:email] if options.has_key?(:email)
+        end
+      end
+    end
+
+    doc = send_xml_api_request(request_body)
+    result_dom(doc)['JOB_ID']
+  end
+
+    # Insert a lead into silverpop
   #
   # expects a hash containing the strings: list_id, email and optionally
   # the string auto_reply.  any entries in the hash will be used to
