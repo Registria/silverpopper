@@ -150,6 +150,7 @@ module Silverpopper::TransferApi
         xml.LIST_VISIBILITY map[:list_visibility] if map.has_key?(:list_visibility)
         xml.LIST_DATE_FORMAT map[:list_date_format] if map.has_key?(:list_date_format)
         xml.FILE_TYPE map[:file_type] if map.has_key?(:file_type)
+        xml.PARENT_FOLDER_ID map[:parent_folder_id] if map.has_key?(:parent_folder_id)
         xml.PARENT_FOLDER_PATH map[:parent_folder_path] if map.has_key?(:parent_folder_path)
         xml.HASHEADERS !!map[:hasheaders] if map.has_key?(:hasheaders)
         xml.DOUBLE_OPT_IN !!map[:double_opt_in] if map.has_key?(:double_opt_in)

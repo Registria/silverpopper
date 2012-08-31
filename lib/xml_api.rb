@@ -356,9 +356,9 @@ module Silverpopper::XmlApi
           xml.PARENT_LIST_ID options[:parent_list_id]
           xml.VISIBILITY options[:visibility]
 
-          xml.PARENT_FOLDER_ID options[:parent_folder_id]
-          xml.SELECT_COLUMNS options[:select_columns]
-          xml.ALLOW_FIELD_CHANGE options[:allow_field_change]
+          xml.PARENT_FOLDER_ID options[:parent_folder_id] if options.has_key?(:parent_folder_id)
+          xml.SELECT_COLUMNS options[:select_columns] if options.has_key?(:select_columns)
+          xml.ALLOW_FIELD_CHANGE options[:allow_field_change] if options.has_key?(:allow_field_change)
 
           xml.CRITERIA do
             xml.TYPE options[:criteria][:type] if options[:criteria].has_key?(:type)
