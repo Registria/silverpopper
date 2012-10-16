@@ -539,13 +539,13 @@ module Silverpopper::XmlApi
 
   # Update the column values of a lead in silverpop.
   #
-  # expects a hash that contains the string: list_id, email.  
+  # expects a hash that contains: list_id, old_email.
   # additional values in the hash will be passed as column values, 
   # with the key being the column name, and the value being the value.
   # Returns the Recipient Id.
   def update_contact(options={})
     contact_list_id = options.delete(:list_id)
-    email = options.delete(:email)
+    old_email = options.delete(:old_email)
 
     request_body = String.new
     xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
@@ -555,7 +555,44 @@ module Silverpopper::XmlApi
       xml.Body do
         xml.UpdateRecipient do
           xml.LIST_ID contact_list_id
-          xml.OLD_EMAIL email
+          xml.OLD_EMAIL old_email
+
+          options.each do |field, value|
+            xml.COLUMN do
+              xml.NAME field
+              xml.VALUE value
+            end
+          end
+        end
+      end
+    end
+
+    doc = send_xml_api_request(request_body)
+    result_dom(doc)['RecipientId']
+  end
+
+  # Moves a contact in a database to an opted-out state.
+  #
+  # :list_id
+  #   Identifies the ID of the database from which to opt out the contact.
+  # :email
+  #   The contact email address to opt out. Note: If using a regular email
+  #   key database, a node must exist for the Email column.If passing
+  #   MAILING_ID, RECIPIENT_ID, and JOB_ID, Engage does not require EMAIL.
+  #   You must provide each of the three elements if EMAIL is not included.
+  def opt_out_contact(options={})
+    contact_list_id = options.delete(:list_id)
+    email = options.delete(:email)
+
+    request_body = String.new
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+
+    xml.instruct!
+    xml.Envelope do
+      xml.Body do
+        xml.OptOutRecipient do
+          xml.LIST_ID contact_list_id
+          xml.EMAIL email
 
           options.each do |field, value|
             xml.COLUMN do
@@ -702,7 +739,7 @@ module Silverpopper::XmlApi
 
   # Given a silverpop api response document, was the api call successful?
   def silverpop_successful?(doc)
-    result_dom(doc)['SUCCESS'].downcase == 'true' rescue false
+    %w[true success].include?(result_dom(doc)['SUCCESS'].downcase) rescue false
   end
 
   # Given a silverpop api response document, parse out the result
@@ -712,15 +749,27 @@ module Silverpopper::XmlApi
 
   # Execute an xml api request, and parse the response
   # Given a parsed xml response document for the silverpop api call
-  # raise the given message unless the call was successful
-  def send_xml_api_request(markup, message = nil)
+  def send_xml_api_request(markup)
     result = send_request(markup, "#{self.api_url}/XMLAPI#{@session_id}", 'api')
     doc = Hash.from_xml(REXML::Document.new(result).to_s)
 
     return doc if silverpop_successful?(doc)
 
-    fault = doc['Envelope']['Body']['Fault']
-    raise message || ("#{fault['FaultString']} (Error ID: #{fault['detail']['error']['errorid']})" rescue "Operation failed: #{result}")
+    raise_error(doc)
+  end
+
+  def raise_error(doc)
+    fault = doc['Envelope']['Body']['Fault'] rescue nil
+    err_id = fault['detail']['error']['errorid'].to_i rescue nil
+
+    raise "Operation failed" if not fault or not err_id
+
+    case err_id
+      when 126
+        raise Silverpopper::EmailNotInListError, "#{fault['FaultString']} (Error ID: #{err_id})"
+      else
+        raise RuntimeError, "#{fault['FaultString']} (Error ID: #{err_id})"
+    end
   end
 
   # A helper method for setting the session_id when logging in

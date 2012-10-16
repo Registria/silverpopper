@@ -1,5 +1,7 @@
 # Silverpopper; the ruby silverpop api wrapper!
-module Silverpopper; end;
+module Silverpopper
+  class EmailNotInListError < RuntimeError; end
+end
 
 # dependencies
 require 'builder'
