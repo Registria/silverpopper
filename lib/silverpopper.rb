@@ -1,5 +1,6 @@
 # Silverpopper; the ruby silverpop api wrapper!
 module Silverpopper
+  class EmailBlockedError < RuntimeError; end
   class EmailNotInListError < RuntimeError; end
 end
 

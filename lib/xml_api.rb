@@ -764,11 +764,15 @@ module Silverpopper::XmlApi
 
     raise "Operation failed" if not fault or not err_id
 
+    msg = "#{fault['FaultString']} (Error ID: #{err_id})"
+
     case err_id
+      when 121
+        raise Silverpopper::EmailBlockedError, msg
       when 126
-        raise Silverpopper::EmailNotInListError, "#{fault['FaultString']} (Error ID: #{err_id})"
+        raise Silverpopper::EmailNotInListError, msg
       else
-        raise RuntimeError, "#{fault['FaultString']} (Error ID: #{err_id})"
+        raise RuntimeError, msg
     end
   end
 
