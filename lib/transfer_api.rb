@@ -17,7 +17,7 @@ module Silverpopper::TransferApi
   def ftp_logged_in?
     begin
       self.ftp.noop
-    rescue Net::FTPConnectionError
+    rescue Net::FTPConnectionError, Errno::EPIPE
       false
     else
       true
