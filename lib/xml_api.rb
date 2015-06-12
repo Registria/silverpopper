@@ -21,6 +21,8 @@ module Silverpopper::XmlApi
 
   # Expire the Session Id and forget the stored Session Id
   def api_logout
+    return if @session_id.nil?
+
     request_body = String.new
     xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
     xml.Envelope do
@@ -768,11 +770,11 @@ module Silverpopper::XmlApi
 
     case err_id
       when 121
-        raise Silverpopper::EmailBlockedError, msg
+        raise Silverpopper::EmailBlockedError.new(msg, err_id)
       when 126
-        raise Silverpopper::EmailNotInListError, msg
+        raise Silverpopper::EmailNotInListError.new(msg, err_id)
       else
-        raise RuntimeError, msg
+        raise Silverpopper::SilverpopError.new(msg, err_id)
     end
   end
 
