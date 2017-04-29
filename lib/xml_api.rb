@@ -325,7 +325,7 @@ module Silverpopper::XmlApi
     result_dom(doc)['CONTACT_LIST_ID']
   end
 
-  # Create a new query of an Engage database.
+  # Create a new classic query of an Engage database.
   # Returns created query id if successful
   #
   # === Options
@@ -340,7 +340,7 @@ module Silverpopper::XmlApi
   #   in the database
   # [:behavior]
   #   Filters mailing contacts by their activity
-  def create_query(options)
+  def create_classic_query(options)
     raise ArgumentError, "Query name is not present" unless options[:query_name]
     raise ArgumentError, "Parent list id is not present" unless options[:parent_list_id]
     raise ArgumentError, "Criteria is required" unless options[:criteria]
@@ -402,6 +402,59 @@ module Silverpopper::XmlApi
               xml.WHERE_OPERATOR options[:where_operator] if options.has_key?(:where_operator)
               xml.CRITERIA_OPERATOR options[:criteria_operator] if options.has_key?(:criteria_operator)
               xml.VALUES options[:values] if options.has_key?(:values)
+            end
+          end
+        end
+      end
+    end
+
+    doc = send_xml_api_request(request_body)
+    result_dom(doc)['ListId']
+  end
+
+  def create_query(options)
+    raise ArgumentError, "Query name is not present" unless options[:query_name]
+    raise ArgumentError, "Parent list id is not present" unless options[:parent_list_id]
+    raise ArgumentError, "Criteria is required" unless options[:criteria]
+
+    options[:visibility] ||= 0
+
+    request_body = ''
+    xml = Builder::XmlMarkup.new(:target => request_body, :indent => 1)
+    xml.instruct!
+
+    xml.Envelope do
+      xml.Body do
+        xml.CreateQuery do
+          xml.QUERY_NAME options[:query_name]
+          xml.PARENT_LIST_ID options[:parent_list_id]
+          xml.VISIBILITY options[:visibility]
+
+          xml.PARENT_FOLDER_ID options[:parent_folder_id] if options.has_key?(:parent_folder_id)
+          xml.SELECT_COLUMNS options[:select_columns] if options.has_key?(:select_columns)
+          xml.ALLOW_FIELD_CHANGE options[:allow_field_change] if options.has_key?(:allow_field_change)
+
+          xml.CRITERIA do
+            options[:criteria][:expressions].each do |exp|
+              xml.EXPRESSION exp.slice(:criteria_type) do
+                xml.COLUMN exp[:column] if exp.has_key?(:column)
+                xml.OPERATOR exp[:operator] if exp.has_key?(:operator)
+                xml.VALUE exp[:value] if exp.has_key?(:value)
+
+                if exp.has_key?(:values)
+                  xml.VALUES do
+                    exp[:values].each do |value|
+                      xml.VALUE value
+                    end
+                  end
+                end
+
+                xml.TIMEFRAME exp[:timeframe] if exp.has_key?(:timeframe)
+                xml.TIME_UNIT exp[:time_unit] if exp.has_key?(:time_unit)
+                xml.UNIT exp[:unit] if exp.has_key?(:unit)
+                xml.PARENS exp[:parens] if exp.has_key?(:parens)
+                xml.CONJUNCTION exp[:conjunction] if exp.key?(:conjunction)
+              end
             end
           end
         end
