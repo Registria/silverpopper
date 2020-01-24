@@ -3,7 +3,7 @@ module Silverpopper::TransactApi
   # Send an email through the Transact API
   #
   # arguments are a hash, that expect string keys for: email, transaction_id, campaign_id.
-  # any additional arguments are used as personalization arguments; hash key is 
+  # any additional arguments are used as personalization arguments; hash key is
   # the personalization tag name, hash value is the personalization value
   def send_transact_mail(options={})
     email          = options.delete(:email)
@@ -39,8 +39,8 @@ module Silverpopper::TransactApi
 
   # make transact api call, and parse the response with rexml
   def send_transact_request(markup)
-    response = send_request(markup, 
-      "#{self.transact_url}/XTMail#{self.session_id}", 'transact')
+    response = send_request(markup,
+      "#{self.transact_url}/XTMail#{@session_id}", 'transact')
     REXML::Document.new(response)
   end
 
