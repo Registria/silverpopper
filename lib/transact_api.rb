@@ -18,6 +18,11 @@ module Silverpopper::TransactApi
       xml.CAMPAIGN_ID campaign_id
       xml.TRANSACTION_ID transaction_id
       xml.SEND_AS_BATCH 'false'
+      xml.SAVE_COLUMNS do
+        options.each do |key, _value|
+          xml.COLUMN_NAME key
+        end
+      end
       xml.RECIPIENT do
         xml.EMAIL email
         xml.BODY_TYPE 'HTML'
