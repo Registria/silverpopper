@@ -567,7 +567,7 @@ module Silverpopper::XmlApi
     true
   end
 
-  # Request details for lead.  
+  # Request details for lead.
   #
   # expects a hash that contains the strings:
   # list_id, email.  Returns a hash containing properties
@@ -595,7 +595,7 @@ module Silverpopper::XmlApi
   # Update the column values of a lead in silverpop.
   #
   # expects a hash that contains: list_id, old_email.
-  # additional values in the hash will be passed as column values, 
+  # additional values in the hash will be passed as column values,
   # with the key being the column name, and the value being the value.
   # Returns the Recipient Id.
   def update_contact(options={})
@@ -663,9 +663,9 @@ module Silverpopper::XmlApi
     result_dom(doc)['RecipientId']
   end
 
-  # Send an email to a user with a pre existing template.  
+  # Send an email to a user with a pre existing template.
   #
-  # expects a hash containing the strings: email, mailing_id.  
+  # expects a hash containing the strings: email, mailing_id.
   def send_mailing(options={})
     email, mailing_id = options.delete(:email), options.delete(:mailing_id)
     request_body = String.new
@@ -685,10 +685,10 @@ module Silverpopper::XmlApi
     true
   end
 
-  # Schedule a mailing to be sent to an entire list. 
-  # expects a hash containing the keys with the strings: 
-  # list_id, template_id, mailing_name, subject, from_name, 
-  # from_address, reply_to.  Additional entries in the argument 
+  # Schedule a mailing to be sent to an entire list.
+  # expects a hash containing the keys with the strings:
+  # list_id, template_id, mailing_name, subject, from_name,
+  # from_address, reply_to.  Additional entries in the argument
   # will be treated as the substitution name, and substitution values.
   # Returns the Mailing Id.
   def schedule_mailing(options={})

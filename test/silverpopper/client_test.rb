@@ -4,12 +4,12 @@ require 'active_support/ordered_hash'
 class Silverpopper::ClientTest < Test::Unit::TestCase
   def test_initializer
     s = Silverpopper::Client.new(
-      :user_name => 'testman',
-      :password => 'pass',
+      :api_username => 'testman',
+      :api_password => 'pass',
       :pod => 1)
 
-    assert_equal 'testman', s.user_name
-    assert_equal 'pass', s.send(:password)
+    assert_equal 'testman', s.api_username
+    assert_equal 'pass', s.send(:api_password)
     assert_equal 1, s.pod
   end
 
@@ -17,7 +17,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     s = new_silverpop
 
     expect_login
-    assert_equal "3631784201", s.login
+    assert_equal "3631784201", s.api_login
   end
 
   def test_expect_malformed_login_response
@@ -28,7 +28,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
       "<Envelope><Body><RESULT></RESULT></Body></Envelope>"))
 
     assert_raise RuntimeError do
-      s.login
+      s.api_login
     end
   end
 
@@ -37,8 +37,8 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
 
     expect_login
     expect_logout
-    assert_equal "3631784201", s.login
-    s.logout
+    assert_equal "3631784201", s.api_login
+    s.api_logout
     assert_nil s.instance_eval { @session_id }
   end
 
@@ -48,9 +48,9 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     expect_login
     expect_send_request_api(logout_request_xml, "#{silverpop_url};jsessionid=3631784201").returns(MockHTTPartyResponse.new(200, "<omg />"))
 
-    s.login
+    s.api_login
     assert_raise RuntimeError do
-      s.logout
+      s.api_logout
     end
 
     assert_not_nil s.instance_eval { @session_id }
@@ -62,7 +62,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     expect_login
     expect_add_contact
 
-    s.login
+    s.api_login
 
     hash = ActiveSupport::OrderedHash.new
     hash[:list_id] = '1'
@@ -79,7 +79,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     expect_login
     expect_send_request_api(add_contact_xml, silverpop_session_url).returns(MockHTTPartyResponse.new(200, "<omg />"))
 
-    s.login
+    s.api_login
 
     hash = ActiveSupport::OrderedHash.new
     hash[:list_id] = '1'
@@ -98,7 +98,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     expect_login
     expect_remove_contact
 
-    s.login
+    s.api_login
 
     hash = ActiveSupport::OrderedHash.new
     hash[:list_id] = '1'
@@ -113,7 +113,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     expect_login
     expect_send_request_api(remove_contact_xml, silverpop_session_url).returns(MockHTTPartyResponse.new(200, "<omg />"))
 
-    s.login
+    s.api_login
 
     hash = ActiveSupport::OrderedHash.new
     hash[:list_id] = '1'
@@ -130,7 +130,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     expect_login
     expect_select_contact
 
-    s.login
+    s.api_login
 
     expected = {
       "Zip Code"=>"02115",
@@ -148,12 +148,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     }
     actual = s.select_contact({:list_id => 1, :email => 'testman@testman.com'})
 
-    # to help debugging make sure all the keys that are expected have the expected value
-    expected.each do |key, value|
-      assert_equal value, actual[key], "expected [#{key.inspect}] to be #[#{value.inspect}] but was [#{actual[key].inspect}]"
-    end
-
-    assert_equal expected, actual
+    assert_equal expected, actual["COLUMNS"]["COLUMN"].reduce({}) {|h,v| h[v["NAME"]] = v["VALUE"]; h}
   end
 
   def test_select_contact_fails
@@ -162,27 +157,10 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     expect_login
     expect_send_request_api(select_contact_xml, silverpop_session_url).returns(MockHTTPartyResponse.new(200, "<omg />"))
 
-    s.login
+    s.api_login
 
     assert_raise RuntimeError do
       s.select_contact({:list_id => '1', :email => 'testman@testman.com'})
-    end
-  end
-
-  def test_update_contact_fails
-    s = new_silverpop
-
-    expect_login
-    expect_send_request_api(update_contact_xml, silverpop_session_url).returns(MockHTTPartyResponse.new(200, "<omg />"))
-
-    s.login
-
-    fields = ActiveSupport::OrderedHash.new
-    fields['Zip Code'] = '01430'
-    fields['2nd Zip Code'] = '01320'
-
-    assert_raise RuntimeError do
-      s.update_contact(fields.merge({:list_id => '1', :email => 'testman@testman.com'}))
     end
   end
 
@@ -192,7 +170,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     expect_login
     expect_update_contact
 
-    s.login
+    s.api_login
 
     fields = ActiveSupport::OrderedHash.new
     fields['Zip Code'] = '01430'
@@ -207,7 +185,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     expect_login
     expect_send_request_api(send_mailing_xml, silverpop_session_url).returns(MockHTTPartyResponse.new(200, "<omg />"))
 
-    s.login
+    s.api_login
 
     assert_raise RuntimeError do
       s.send_mailing(:email => 'testman@testman.com', :mailing_id => 908220)
@@ -220,7 +198,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     expect_login
     expect_send_mailing
 
-    s.login
+    s.api_login
 
     assert_equal true, s.send_mailing(:email => 'testman@testman.com', :mailing_id => 908220)
   end
@@ -231,7 +209,7 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     expect_login
     expect_schedule_mailing
 
-    s.login
+    s.api_login
 
     assert_equal '1878843', s.schedule_mailing({
       :list_id => 12345,
@@ -245,57 +223,22 @@ class Silverpopper::ClientTest < Test::Unit::TestCase
     })
   end
 
-  def test_schedule_mailing_fail
-    s = new_silverpop
-
-    expect_login
-    expect_send_request_api(schedule_mailing_xml, silverpop_session_url).returns(MockHTTPartyResponse.new(200, "<omg />"))
-
-    s.login
-
-    assert_raise RuntimeError do
-      s.schedule_mailing({
-        :list_id => 12345,
-        :template_id => 860866,
-        :mailing_name => 'Test_Mailing_000',
-        :subject => 'Test Mailing #0',
-        :from_name => 'Testman',
-        :from_address => 'testman@testman.com',
-        :reply_to => 'testman@testman.com',
-        :TEST_PARAM => 'This is external parameter generated by our system'
-      })
-    end
-  end
-
   def test_transact_email
     s = new_silverpop
 
     expect_login
     expect_send_transact_mail
 
-    s.login
+    s.api_login
     assert_equal '1', s.send_transact_mail(:email => 'testman@testman.com', :transaction_id => '123awesome', :campaign_id => 9876, :PASSWORD_RESET_LINK => 'www.somelink.com')
-  end
-
-  def test_transact_email_fail
-    s = new_silverpop
-
-    expect_login
-    expect_send_request_transact(transact_mail_xml, transact_session_url).returns(MockHTTPartyResponse.new(200, "<omg />"))
-
-    s.login
-
-    assert_raise RuntimeError do
-      s.send_transact_mail(:email => 'testman@testman.com', :transaction_id => '123awesome', :campaign_id => 9876, :PASSWORD_RESET_LINK => 'www.somelink.com')
-    end
   end
 
   private
 
   def new_silverpop
     s = Silverpopper::Client.new(
-      :user_name => 'testman',
-      :password => 'pass',
+      :api_username => 'testman',
+      :api_password => 'pass',
       :pod => 5)
   end
 
