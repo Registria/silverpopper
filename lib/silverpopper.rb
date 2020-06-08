@@ -20,6 +20,7 @@ require 'builder'
 require 'net/ftp'
 require 'httparty'
 require 'rexml/document'
+require 'active_support'
 require 'active_support/core_ext'
 
 # core files
