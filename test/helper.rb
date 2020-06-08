@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'bundler'
-require 'pry'
 require 'fakeweb'
 require 'mocha'
 

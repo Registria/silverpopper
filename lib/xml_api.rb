@@ -35,18 +35,6 @@ module Silverpopper::XmlApi
     self.session_id = nil
   end
 
-  def oauth_login
-    request_body = {
-      grant_type: "refresh_token",
-      client_id: self.client_id,
-      client_secret: self.client_secret,
-      refresh_token: self.refresh_token
-    }
-
-    doc = request_access_token(request_body, @oauth_url)
-    self.access_token = JSON.parse(doc).dig("access_token")
-  end
-
   # Get job status by id
   # Return array with the job status and description
   #
@@ -579,7 +567,7 @@ module Silverpopper::XmlApi
     true
   end
 
-  # Request details for lead.
+  # Request details for lead.  
   #
   # expects a hash that contains the strings:
   # list_id, email.  Returns a hash containing properties
@@ -607,7 +595,7 @@ module Silverpopper::XmlApi
   # Update the column values of a lead in silverpop.
   #
   # expects a hash that contains: list_id, old_email.
-  # additional values in the hash will be passed as column values,
+  # additional values in the hash will be passed as column values, 
   # with the key being the column name, and the value being the value.
   # Returns the Recipient Id.
   def update_contact(options={})
@@ -675,9 +663,9 @@ module Silverpopper::XmlApi
     result_dom(doc)['RecipientId']
   end
 
-  # Send an email to a user with a pre existing template.
+  # Send an email to a user with a pre existing template.  
   #
-  # expects a hash containing the strings: email, mailing_id.
+  # expects a hash containing the strings: email, mailing_id.  
   def send_mailing(options={})
     email, mailing_id = options.delete(:email), options.delete(:mailing_id)
     request_body = String.new
@@ -697,10 +685,10 @@ module Silverpopper::XmlApi
     true
   end
 
-  # Schedule a mailing to be sent to an entire list.
-  # expects a hash containing the keys with the strings:
-  # list_id, template_id, mailing_name, subject, from_name,
-  # from_address, reply_to.  Additional entries in the argument
+  # Schedule a mailing to be sent to an entire list. 
+  # expects a hash containing the keys with the strings: 
+  # list_id, template_id, mailing_name, subject, from_name, 
+  # from_address, reply_to.  Additional entries in the argument 
   # will be treated as the substitution name, and substitution values.
   # Returns the Mailing Id.
   def schedule_mailing(options={})
@@ -817,7 +805,7 @@ module Silverpopper::XmlApi
   # Execute an xml api request, and parse the response
   # Given a parsed xml response document for the silverpop api call
   def send_xml_api_request(markup)
-    result = send_oauth_request(markup, "#{self.api_url}/XMLAPI", 'api')
+    result = send_request(markup, "#{self.api_url}/XMLAPI#{@session_id}", 'api')
     doc = Hash.from_xml(REXML::Document.new(result).to_s)
 
     return doc if silverpop_successful?(doc)
@@ -846,9 +834,5 @@ module Silverpopper::XmlApi
   # A helper method for setting the session_id when logging in
   def session_id=(session_id)
     @session_id = session_id.blank? ? nil : ";jsessionid=#{session_id}"
-  end
-
-  def access_token=(access_token)
-    @access_token = access_token.blank? ? nil : "#{access_token}"
   end
 end

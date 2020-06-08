@@ -3,7 +3,7 @@
 
 Gem::Specification.new do |s|
   s.name = "silverpopper".freeze
-  s.version = "1.0.0"
+  s.version = "0.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0".freeze) if s.respond_to? :required_rubygems_version=
   s.require_paths = ["lib".freeze]
@@ -26,7 +26,6 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<httparty>.freeze, [">= 0"])
       s.add_runtime_dependency(%q<activesupport>.freeze, [">= 0"])
       s.add_runtime_dependency(%q<i18n>.freeze, [">= 0"])
-      s.add_runtime_dependency(%q<oauth2>.freeze, [">= 0"])
       s.add_development_dependency(%q<bundler>.freeze, ["~> 1.0.0"])
       s.add_development_dependency(%q<jeweler>.freeze, ["~> 1.6.4"])
       s.add_development_dependency(%q<rcov>.freeze, [">= 0"])
@@ -37,7 +36,6 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<httparty>.freeze, [">= 0"])
       s.add_dependency(%q<activesupport>.freeze, [">= 0"])
       s.add_dependency(%q<i18n>.freeze, [">= 0"])
-      s.add_runtime_dependency(%q<oauth2>.freeze, [">= 0"])
       s.add_dependency(%q<bundler>.freeze, ["~> 1.0.0"])
       s.add_dependency(%q<jeweler>.freeze, ["~> 1.6.4"])
       s.add_dependency(%q<rcov>.freeze, [">= 0"])
@@ -49,7 +47,6 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<httparty>.freeze, [">= 0"])
     s.add_dependency(%q<activesupport>.freeze, [">= 0"])
     s.add_dependency(%q<i18n>.freeze, [">= 0"])
-    s.add_runtime_dependency(%q<oauth2>.freeze, [">= 0"])
     s.add_dependency(%q<bundler>.freeze, ["~> 1.0.0"])
     s.add_dependency(%q<jeweler>.freeze, ["~> 1.6.4"])
     s.add_dependency(%q<rcov>.freeze, [">= 0"])
