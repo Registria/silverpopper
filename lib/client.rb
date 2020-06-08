@@ -25,7 +25,7 @@ class Silverpopper::Client
   # Initialize a Silverpopper Client
   #
   # expects a hash with string keys: 'api_username', 'api_password', 'pod'.
-  # pod argument is defaulted to 5
+  # pod argument is defaulted to 1
   def initialize(options={})
     @api_username = options[:api_username]
     @api_password = options[:api_password]
