@@ -817,7 +817,7 @@ module Silverpopper::XmlApi
   # Execute an xml api request, and parse the response
   # Given a parsed xml response document for the silverpop api call
   def send_xml_api_request(markup)
-    result = send_request(markup, "#{self.api_url}/XMLAPI#{@session_id}", 'api')
+    result = send_oauth_request(markup, "#{self.api_url}/XMLAPI", 'api')
     doc = Hash.from_xml(REXML::Document.new(result).to_s)
 
     return doc if silverpop_successful?(doc)
