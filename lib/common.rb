@@ -14,11 +14,12 @@ module Silverpopper::Common
     resp.body
   end
 
-  def send_oauth_request(body, url, api_host)
-    resp = HTTParty.post(url, body: body, headers: {
+  def send_oauth_request(markup, url, api_host)
+    resp = HTTParty.post(url, body: markup, headers: {
       "Content-type" => "text/xml;charset=UTF-8",
-      "Authorization" => "Bearer #{@access_token}"
+      "Authorization" => "Bearer #{access_token}"
     })
+
     raise "Request Failed" unless resp.code == 200 || resp.code == 201
 
     resp.body
