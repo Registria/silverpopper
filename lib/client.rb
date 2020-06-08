@@ -14,7 +14,7 @@ class Silverpopper::Client
   attr_reader :pod
 
   # Silverpop urls
-  attr_reader :api_url, :transact_url, :transfer_url
+  attr_reader :api_url, :transact_url, :transfer_url, :oauth_url
 
   # Silverpop FTP client
   attr_reader :ftp
