@@ -35,7 +35,7 @@ module Silverpopper::XmlApi
     self.session_id = nil
   end
 
-  def oauth_access_token
+  def oauth_login
     request_body = {
       grant_type: "refresh_token",
       client_id: self.client_id,
