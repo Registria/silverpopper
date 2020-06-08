@@ -35,6 +35,18 @@ module Silverpopper::XmlApi
     self.session_id = nil
   end
 
+  def oauth_access_token
+    request_body = {
+      grant_type: "refresh_token",
+      client_id: self.client_id,
+      client_secret: self.client_secret,
+      refresh_token: self.refresh_token
+    }
+
+    doc = request_access_token(request_body, @oauth_url)
+    self.access_token = JSON.parse(doc).dig("access_token")
+  end
+
   # Get job status by id
   # Return array with the job status and description
   #
@@ -834,5 +846,9 @@ module Silverpopper::XmlApi
   # A helper method for setting the session_id when logging in
   def session_id=(session_id)
     @session_id = session_id.blank? ? nil : ";jsessionid=#{session_id}"
+  end
+
+  def access_token=(access_token)
+    @access_token = access_token.blank? ? nil : "#{access_token}"
   end
 end
