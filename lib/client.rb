@@ -34,11 +34,12 @@ class Silverpopper::Client
     @refresh_token = options[:refresh_token]
     @ftp_username = options[:ftp_username] || options[:api_username]
     @ftp_password = options[:ftp_password] || options[:api_password]
-    @pod          = options[:pod]          || 1
-    @api_url      = options[:api_url]      || "http://api#{@pod}.silverpop.com"
+    @pod = options[:pod] || 1
+    @api_url = options[:api_url] || "http://api#{@pod}.silverpop.com"
     @transact_url = options[:transact_url] || "http://transact#{@pod}.silverpop.com"
     @transfer_url = options[:transfer_url] || "transfer#{@pod}.silverpop.com"
-    @ftp          = Net::FTP.new
+    @oauth_url = options[:oauth_url] || "https://api#{@pod}.ibmmarketingcloud.com/oauth/token"
+    @ftp = Net::FTP.new
     @cached_lists = []
   end
 
