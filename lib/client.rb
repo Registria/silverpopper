@@ -19,6 +19,9 @@ class Silverpopper::Client
   # Silverpop FTP client
   attr_reader :ftp
 
+  # Login Type
+  attr_reader :login_type
+
   # Cached remote contact lists
   attr_accessor :cached_lists
 
@@ -41,6 +44,7 @@ class Silverpopper::Client
     @oauth_url = options[:oauth_url] || "https://api#{@pod}.ibmmarketingcloud.com/oauth/token"
     @ftp = Net::FTP.new
     @cached_lists = []
+    @login_type = options[:login_type] || "oauth"
   end
 
   protected
