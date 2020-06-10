@@ -44,7 +44,13 @@ module Silverpopper::TransactApi
 
   # make transact api call, and parse the response with rexml
   def send_transact_request(markup)
-    response = send_oauth_request(markup, "#{self.transact_url}/XTMail", 'transact')
+    response =
+      if login_type == "legacy"
+        send_request(markup, "#{self.transact_url}/XTMail#{@session_id}", 'transact')
+      else
+        send_oauth_request(markup, "#{self.transact_url}/XTMail", 'transact')
+      end
+
     REXML::Document.new(response)
   end
 
