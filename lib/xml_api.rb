@@ -34,6 +34,7 @@ module Silverpopper::XmlApi
     send_xml_api_request(request_body)
     self.session_id = nil
   end
+  alias_method :logout, :api_logout
 
   def oauth_login
     request_body = {
@@ -45,6 +46,10 @@ module Silverpopper::XmlApi
 
     doc = request_access_token(request_body, @oauth_url)
     self.access_token = JSON.parse(doc).dig("access_token")
+  end
+
+  def login
+    login_type == "oauth" ? oauth_login : api_login
   end
 
   # Get job status by id
@@ -817,7 +822,13 @@ module Silverpopper::XmlApi
   # Execute an xml api request, and parse the response
   # Given a parsed xml response document for the silverpop api call
   def send_xml_api_request(markup)
-    result = send_oauth_request(markup, "#{self.api_url}/XMLAPI", 'api')
+    result =
+      if login_type == "legacy"
+        send_request(markup, "#{self.api_url}/XMLAPI#{@session_id}", 'api')
+      else
+        send_oauth_request(markup, "#{self.api_url}/XMLAPI", 'api')
+      end
+
     doc = Hash.from_xml(REXML::Document.new(result).to_s)
 
     return doc if silverpop_successful?(doc)
