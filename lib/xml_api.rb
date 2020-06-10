@@ -824,7 +824,7 @@ module Silverpopper::XmlApi
   def send_xml_api_request(markup)
     result =
       if login_type == "legacy"
-        send_request(markup, "#{self.api_url}/XTMail#{@session_id}", 'api')
+        send_request(markup, "#{self.api_url}/XMLAPI#{@session_id}", 'api')
       else
         send_oauth_request(markup, "#{self.api_url}/XMLAPI", 'api')
       end
