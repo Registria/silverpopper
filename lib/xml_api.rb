@@ -34,6 +34,7 @@ module Silverpopper::XmlApi
     send_xml_api_request(request_body)
     self.session_id = nil
   end
+  alias_method :logout, :api_logout
 
   def oauth_login
     request_body = {
@@ -45,6 +46,10 @@ module Silverpopper::XmlApi
 
     doc = request_access_token(request_body, @oauth_url)
     self.access_token = JSON.parse(doc).dig("access_token")
+  end
+
+  def login
+    login_type == "oauth" ? oauth_login : api_login
   end
 
   # Get job status by id
