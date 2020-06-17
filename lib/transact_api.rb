@@ -37,6 +37,7 @@ module Silverpopper::TransactApi
 
     doc = send_transact_request(request_body)
     validate_transact_success!(doc, "failure to send transact message")
+
     doc.elements['XTMAILING_RESPONSE'].elements['RECIPIENTS_RECEIVED'].text
   end
 
@@ -64,6 +65,7 @@ module Silverpopper::TransactApi
   # does the xml document indicate a transact successful response?
   def transact_successful?(doc)
     doc != nil && doc.elements['XTMAILING_RESPONSE'] != nil &&
-      doc.elements['XTMAILING_RESPONSE'].elements['ERROR_CODE'] != nil
+      doc.elements['XTMAILING_RESPONSE'].elements['RECIPIENTS_RECEIVED'] != nil &&
+      doc.elements['XTMAILING_RESPONSE'].elements['RECIPIENTS_RECEIVED'].text != "0"
   end
 end
