@@ -807,6 +807,75 @@ module Silverpopper::XmlApi
     result_dom(doc)
   end
 
+  # Extracts a listing of mailings sent for an user for a
+  # specified date range.
+  #
+  # === Options
+  # See the Silverpop XML API documentation,
+  # chapter "Get a List of Sent Mailings for an User".
+  # https://developer.goacoustic.com/acoustic-campaign/reference/reporting#getsentmailingsforuser
+  def get_sent_mailings_for_user(options={})
+    raise ArgumentError, ":date_start is required" unless options.has_key?(:date_start)
+    raise ArgumentError, ":date_end is required" unless options.has_key?(:date_end)
+    raise ArgumentError, ":optional_user is required" unless options.has_key?(:optional_user)
+
+    options[:date_start] =
+      options[:date_start].utc.strftime("%m/%d/%Y %H:%M:%S") unless options[:date_start].is_a?(String)
+    options[:date_end] =
+      options[:date_end].utc.strftime("%m/%d/%Y %H:%M:%S") unless options[:date_end].is_a?(String)
+
+    date_start = options.delete(:date_start)
+    date_end = options.delete(:date_end)
+    user_email = options.delete(:optionaluser)
+
+    request_body = String.new
+    xml = Builder::XmlMarkup.new(target: request_body, indent: 1)
+
+    xml.instruct!
+    xml.Envelope do
+      xml.Body do
+        xml.GetSentMailingsForUser do
+          xml.DATE_START date_start
+          xml.DATE_END date_end
+          xml.OPTIONALUSER user_email
+        end
+      end
+    end
+    binding.pry
+    doc = send_xml_api_request(request_body)
+    result_dom(doc)["Mailing"] || []
+  end
+
+  # Returns a preview of mailing template.
+  #
+  # === Options
+  # See the Silverpop XML API documentation,
+  # chapter "Preview a Mailing before sending".
+  # https://developer.goacoustic.com/acoustic-campaign/reference/template-and-mailing-management#previewmailing
+  def preview_mailing(options={})
+    raise ArgumentError, ":mailing_id is required" unless options.has_key?(:mailing_id)
+    raise ArgumentError, ":recipient_email is required" unless options.has_key?(:recipient_email)
+
+    # mailing_id, recipient_email = options.delete(:mailing_id), options.delete(:recipient_email)
+
+    request_body = String.new
+    xml = Builder::XmlMarkup.new(target: request_body, indent: 1)
+
+    xml.instruct!
+    xml.Envelope do
+      xml.Body do
+        xml.PreviewMailing do
+          apply_xml_options!(xml, options)
+          # xml.MailingId mailing_id
+          # xml.RecipientEmail recipient_email
+        end
+      end
+    end
+
+    doc = send_xml_api_request(request_body)
+    result_dom(doc)["HTMLBody"] || []
+  end
+
   protected
 
   # Given a silverpop api response document, was the api call successful?
