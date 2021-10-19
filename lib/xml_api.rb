@@ -817,7 +817,7 @@ module Silverpopper::XmlApi
   def get_sent_mailings_for_user(options={})
     raise ArgumentError, ":date_start is required" unless options.has_key?(:date_start)
     raise ArgumentError, ":date_end is required" unless options.has_key?(:date_end)
-    raise ArgumentError, ":optional_user is required" unless options.has_key?(:optional_user)
+    raise ArgumentError, ":optional_user is required" unless options.has_key?(:optionaluser)
 
     options[:date_start] =
       options[:date_start].utc.strftime("%m/%d/%Y %H:%M:%S") unless options[:date_start].is_a?(String)
@@ -856,7 +856,8 @@ module Silverpopper::XmlApi
     raise ArgumentError, ":mailing_id is required" unless options.has_key?(:mailing_id)
     raise ArgumentError, ":recipient_email is required" unless options.has_key?(:recipient_email)
 
-    # mailing_id, recipient_email = options.delete(:mailing_id), options.delete(:recipient_email)
+    mailing_id = options.delete(:mailing_id)
+    recipient_email = options.delete(:recipient_email)
 
     request_body = String.new
     xml = Builder::XmlMarkup.new(target: request_body, indent: 1)
@@ -865,9 +866,8 @@ module Silverpopper::XmlApi
     xml.Envelope do
       xml.Body do
         xml.PreviewMailing do
-          apply_xml_options!(xml, options)
-          # xml.MailingId mailing_id
-          # xml.RecipientEmail recipient_email
+          xml.MailingId mailing_id
+          xml.RecipientEmail recipient_email
         end
       end
     end
