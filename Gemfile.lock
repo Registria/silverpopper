@@ -21,9 +21,9 @@ GEM
       oauth2
     hashie (4.1.0)
     highline (2.0.3)
-    httparty (0.8.1)
-      multi_json
-      multi_xml
+    httparty (0.21.0)
+      mini_mime (>= 1.0.0)
+      multi_xml (>= 0.5.2)
     httpauth (0.2.1)
     i18n (0.6.0)
     jeweler (2.0.1)
@@ -39,11 +39,12 @@ GEM
       multi_json (>= 1.0)
     metaclass (0.0.1)
     method_source (1.0.0)
+    mini_mime (1.1.2)
     mini_portile2 (2.4.0)
     mocha (0.10.0)
       metaclass (~> 0.0.1)
-    multi_json (1.0.3)
-    multi_xml (0.4.1)
+    multi_json (1.15.0)
+    multi_xml (0.6.0)
     multipart-post (2.1.1)
     nokogiri (1.10.9)
       mini_portile2 (~> 2.4.0)
