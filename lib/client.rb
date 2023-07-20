@@ -7,18 +7,18 @@ class Silverpopper::Client
   include Silverpopper::Common
 
   POD_API_URLS = {
-    "1"	=> "api-campaign-us-1.goacoustic.com",
-    "2"	=> "api-campaign-us-2.goacoustic.com",
-    "3"	=> "api-campaign-us-3.goacoustic.com",
-    "4"	=> "api-campaign-us-4.goacoustic.com",
-    "5"	=> "api-campaign-us-5.goacoustic.com",
-    "6"	=> "api-campaign-eu-1.goacoustic.com",
-    "7"	=> "api-campaign-ap-2.goacoustic.com",
-    "8"	=> "api-campaign-ca-1.goacoustic.com",
-    "9"	=> "api-campaign-us-6.goacoustic.com",
-    "A"	=> "api-campaign-ap-1.goacoustic.com",
-    "B"	=> "api-campaign-ap-3.goacoustic.com",
-    "PILOT"	=> "api-campaign-pilot.goacoustic.com"
+    "1" => "api-campaign-us-1.goacoustic.com",
+    "2" => "api-campaign-us-2.goacoustic.com",
+    "3" => "api-campaign-us-3.goacoustic.com",
+    "4" => "api-campaign-us-4.goacoustic.com",
+    "5" => "api-campaign-us-5.goacoustic.com",
+    "6" => "api-campaign-eu-1.goacoustic.com",
+    "7" => "api-campaign-ap-2.goacoustic.com",
+    "8" => "api-campaign-ca-1.goacoustic.com",
+    "9" => "api-campaign-us-6.goacoustic.com",
+    "A" => "api-campaign-ap-1.goacoustic.com",
+    "B" => "api-campaign-ap-3.goacoustic.com",
+    "PILOT" => "api-campaign-pilot.goacoustic.com"
   }.freeze
 
   # User names to log into silverpop with
