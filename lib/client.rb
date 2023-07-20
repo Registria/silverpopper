@@ -6,6 +6,21 @@ class Silverpopper::Client
   include Silverpopper::XmlApi
   include Silverpopper::Common
 
+  POD_API_URLS = {
+    "1"	=> "api-campaign-us-1.goacoustic.com",
+    "2"	=> "api-campaign-us-2.goacoustic.com",
+    "3"	=> "api-campaign-us-3.goacoustic.com",
+    "4"	=> "api-campaign-us-4.goacoustic.com",
+    "5"	=> "api-campaign-us-5.goacoustic.com",
+    "6"	=> "api-campaign-eu-1.goacoustic.com",
+    "7"	=> "api-campaign-ap-2.goacoustic.com",
+    "8"	=> "api-campaign-ca-1.goacoustic.com",
+    "9"	=> "api-campaign-us-6.goacoustic.com",
+    "A"	=> "api-campaign-ap-1.goacoustic.com",
+    "B"	=> "api-campaign-ap-3.goacoustic.com",
+    "PILOT"	=> "api-campaign-pilot.goacoustic.com"
+  }.freeze
+
   # User names to log into silverpop with
   attr_reader :api_username, :client_id, :ftp_username
 
@@ -41,7 +56,7 @@ class Silverpopper::Client
     @api_url = options[:api_url] || "http://api#{@pod}.silverpop.com"
     @transact_url = options[:transact_url] || "http://transact#{@pod}.silverpop.com"
     @transfer_url = options[:transfer_url] || "transfer#{@pod}.silverpop.com"
-    @oauth_url = options[:oauth_url] || "https://api#{@pod}.ibmmarketingcloud.com/oauth/token"
+    @oauth_url = options[:oauth_url] || "https://#{POD_API_URLS[@pod]}/oauth/token"
     @ftp = Net::FTP.new
     @cached_lists = []
     @login_type = options[:login_type] || "oauth"
