@@ -56,7 +56,7 @@ class Silverpopper::Client
     @api_url = options[:api_url] || "http://api#{@pod}.silverpop.com"
     @transact_url = options[:transact_url] || "http://transact#{@pod}.silverpop.com"
     @transfer_url = options[:transfer_url] || "transfer#{@pod}.silverpop.com"
-    @oauth_url = options[:oauth_url] || "https://#{POD_API_URLS[@pod]}/oauth/token"
+    @oauth_url = options[:oauth_url] || "https://#{POD_API_URLS[@pod.to_s]}/oauth/token"
     @ftp = Net::FTP.new
     @cached_lists = []
     @login_type = options[:login_type] || "oauth"
